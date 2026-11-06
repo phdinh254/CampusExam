@@ -1,0 +1,87 @@
+using CampusExam.IntegrationTests.Database;
+using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
+using Xunit;
+
+namespace CampusExam.IntegrationTests;
+
+[Collection(SqlServerCollection.Name)]
+public sealed class SchemaScriptTests(SqlServerDatabaseFixture database)
+{
+    [Fact]
+    public async Task Script_creates_all_tables_with_clustered_keys_and_trusted_constraints()
+    {
+        await using var connection = new SqlConnection(database.ConnectionString);
+        await connection.OpenAsync();
+
+        Assert.Equal(21, await ScalarAsync(connection, "SELECT COUNT(*) FROM sys.tables;"));
+        Assert.Equal(0, await ScalarAsync(connection,
+            "SELECT COUNT(*) FROM sys.tables t WHERE NOT EXISTS (SELECT 1 FROM sys.indexes i WHERE i.object_id = t.object_id AND i.type = 1);"));
+        Assert.Equal(0, await ScalarAsync(connection,
+            "SELECT (SELECT COUNT(*) FROM sys.foreign_keys WHERE is_not_trusted = 1) + (SELECT COUNT(*) FROM sys.check_constraints WHERE is_not_trusted = 1);"));
+    }
+
+    [Fact]
+    public async Task Ef_model_columns_match_database_columns()
+    {
+        await using var connection = new SqlConnection(database.ConnectionString);
+        await connection.OpenAsync();
+        var columns = new Dictionary<(string Table, string Column), (string Type, bool Nullable)>();
+        await using (var command = new SqlCommand(
+            """
+            SELECT TABLE_NAME, COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, IS_NULLABLE
+            FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = 'dbo';
+            """,
+            connection))
+        await using (var reader = await command.ExecuteReaderAsync())
+        {
+            while (await reader.ReadAsync())
+            {
+                var type = reader.GetString(2);
+                if (!reader.IsDBNull(3))
+                {
+                    var length = reader.GetInt32(3);
+                    type += length == -1 ? "(max)" : $"({length})";
+                }
+
+                columns[(reader.GetString(0), reader.GetString(1))] = (type, reader.GetString(4) == "YES");
+            }
+        }
+
+        await using var dbContext = database.CreateDbContext();
+        var mismatches = new List<string>();
+        foreach (var entity in dbContext.Model.GetEntityTypes())
+        {
+            var table = StoreObjectIdentifier.Table(entity.GetTableName()!, entity.GetSchema());
+            foreach (var property in entity.GetProperties())
+            {
+                var column = property.GetColumnName(table)!;
+                if (!columns.TryGetValue((table.Name, column), out var actual))
+                {
+                    mismatches.Add($"{table.Name}.{column}: không có trong database");
+                    continue;
+                }
+
+                var expectedType = property.GetColumnType(table);
+                if (!string.Equals(expectedType, actual.Type, StringComparison.OrdinalIgnoreCase))
+                {
+                    mismatches.Add($"{table.Name}.{column}: EF {expectedType}, database {actual.Type}");
+                }
+
+                if (property.IsNullable != actual.Nullable)
+                {
+                    mismatches.Add($"{table.Name}.{column}: EF nullable={property.IsNullable}, database nullable={actual.Nullable}");
+                }
+            }
+        }
+
+        Assert.Empty(mismatches);
+    }
+
+    private static async Task<int> ScalarAsync(SqlConnection connection, string sql)
+    {
+        await using var command = new SqlCommand(sql, connection);
+        return (int)(await command.ExecuteScalarAsync())!;
+    }
+}
