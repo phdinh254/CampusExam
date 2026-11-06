@@ -83,14 +83,16 @@ Ngày cập nhật gần nhất: 05/11/2026.
   Mật khẩu nhập ẩn hai lần (hoặc đặt biến `CAMPUSEXAM_ADMIN_PASSWORD`); tối thiểu
   8 ký tự, có chữ và số, không chứa tên đăng nhập. Mã thoát: 0 thành công, 1 dữ
   liệu không hợp lệ, 2 đã có admin hoặc trùng tên đăng nhập.
-- Database `CampusExam` phát triển **chưa có tài khoản admin**.
+- Database `CampusExam` phát triển đã có tài khoản quản trị `admin` (MTK 1, tạo
+  06/11/2026 bằng `bootstrap-admin`); mật khẩu không ghi trong repo.
 
 ## Trạng thái kiểm tra
 
 - Build solution thành công, không có cảnh báo hoặc lỗi tại mốc gần nhất.
-- 67/67 kiểm thử backend thành công: 32 unit test và 35 integration test (gồm
-  test HTTP qua `WebApplicationFactory` cho route, mã lỗi validation và OpenAPI).
-- 17/17 kiểm thử frontend (Vitest, `npm test`) cho `httpClient`.
+- 98/98 kiểm thử backend thành công: 45 unit test và 53 integration test (gồm
+  test HTTP qua `WebApplicationFactory` cho route, mã lỗi, OpenAPI và toàn bộ luồng
+  xác thực trên SQL Server tạm).
+- 29/29 kiểm thử frontend (Vitest, `npm test`) cho `httpClient` và xác thực.
 - Integration test có truy cập database dùng `SqlServerDatabaseFixture`: mỗi lần
   chạy tạo database tạm `CampusExam_Test_*` từ `CampusExamDB.sql` rồi xóa. Máy chủ
   mặc định là SQL Server cục bộ (Windows auth); đổi bằng biến môi trường
@@ -129,10 +131,27 @@ Ngày cập nhật gần nhất: 05/11/2026.
   khi thêm package có peer dependency; dùng `npm install --legacy-peer-deps`.
   `npm install` trên lockfile hiện tại chạy bình thường.
 
+### Xác thực (06/11/2026)
+
+- Xong bước 2 của `API_DESIGN.md` (chi tiết mục 8): đăng nhập, làm mới, đăng xuất,
+  đổi mật khẩu; JWT 15 phút + refresh cookie xoay vòng; khóa tạm, rate limit;
+  policy theo vai trò; route guard, trang đăng nhập và đổi mật khẩu ở frontend.
+- **Mọi API nghiệp vụ hiện yêu cầu đăng nhập quản trị.** Chạy backend cần thêm
+  khóa ký trong User Secrets (máy này đã đặt):
+
+  ```
+  cd backend/src/CampusExam.Api
+  dotnet user-secrets set "Auth:SigningKey" "<chuỗi ngẫu nhiên tối thiểu 32 ký tự>"
+  ```
+
+- `doi-mat-khau` dùng chung hạn mức 10 lần/phút/IP với đăng nhập. Rate limit tính
+  theo IP kết nối: khi triển khai sau reverse proxy cần bật `ForwardedHeaders`, nếu
+  không mọi người dùng sẽ chung một hạn mức.
+
 ## Bước nhỏ tiếp theo
 
-- Bước 2 của `API_DESIGN.md`: API xác thực (`/api/xac-thuc/*`), JWT + refresh
-  cookie, policy `AdminOnly`/`CandidateOnly`, route guard và nối trang đăng nhập.
+- Bước 3 của `API_DESIGN.md`: KQHT sửa/ngừng dùng, CRUD và danh sách câu hỏi có
+  phân trang, thống kê; nối màn hình ngân hàng câu hỏi.
 
 - Lưu mẫu IU03 thành `.docx`, chạy qua endpoint preview và đối chiếu kết quả phải
   có 41 dòng/74 ảnh; tất cả 41 dòng hiện phải báo `MISSING_CODE` vì cột mã trống.

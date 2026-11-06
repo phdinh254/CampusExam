@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using CampusExam.Api.Authorization;
 using CampusExam.Api.Cli;
 using CampusExam.Api.Common;
 using CampusExam.Infrastructure;
@@ -15,6 +16,7 @@ var connectionString =
 builder.Services.AddDbContext<CampusExamDbContext>(options =>
     options.UseSqlServer(connectionString));
 builder.Services.AddInfrastructure();
+builder.Services.AddCampusExamAuth(builder.Configuration);
 
 builder.Services.AddControllers()
     .ConfigureApiBehaviorOptions(options =>
@@ -46,13 +48,13 @@ if (BootstrapAdminCli.IsRequested(args))
 app.UseExceptionHandler();
 app.UseStatusCodePages();
 app.UseHttpsRedirection();
-app.UseAuthorization();
+app.UseCampusExamAuth();
 app.MapControllers();
 
 if (app.Environment.IsDevelopment())
 {
     // /openapi/v1.json — nguồn để frontend sinh kiểu TypeScript; không mở ở production.
-    app.MapOpenApi();
+    app.MapOpenApi().AllowAnonymous();
 }
 
 app.Run();

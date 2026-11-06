@@ -1,7 +1,9 @@
 import { useState } from "react";
-import { NavLink, Outlet, useLocation } from "react-router-dom";
+import { NavLink, Outlet } from "react-router-dom";
 
 import { Icon, type IconName } from "../components/Icon";
+import { useAuth, useTaiKhoan } from "../features/auth/AuthProvider";
+import { chuCaiDau } from "../features/auth/authUtils";
 
 const navItems: { label: string; to: string; icon: IconName }[] = [
   { label: "Tổng quan", to: "/admin", icon: "dashboard" },
@@ -10,20 +12,10 @@ const navItems: { label: string; to: string; icon: IconName }[] = [
   { label: "Thí sinh", to: "/admin/candidates", icon: "users" },
 ];
 
-const pageTitles: Record<string, { title: string; eyebrow: string }> = {
-  "/admin": { title: "Tổng quan", eyebrow: "Trung tâm điều hành" },
-  "/admin/questions": { title: "Ngân hàng câu hỏi", eyebrow: "Học liệu" },
-  "/admin/exams": { title: "Quản lý kỳ thi", eyebrow: "Tổ chức thi" },
-  "/admin/candidates": { title: "Quản lý thí sinh", eyebrow: "Dự thi" },
-};
-
 export default function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const location = useLocation();
-  const heading = pageTitles[location.pathname] ?? {
-    title: "CampusExam",
-    eyebrow: "Quản trị hệ thống",
-  };
+  const taiKhoan = useTaiKhoan();
+  const { dangXuat } = useAuth();
 
   return (
     <div className="admin-shell">
@@ -59,16 +51,17 @@ export default function AdminLayout() {
       <div className="admin-main">
         <header className="topbar">
           <div className="topbar-title">
-            <button className="icon-button menu-button" onClick={() => setSidebarOpen(true)} type="button">
+            <button aria-label="Mở menu" className="icon-button menu-button" onClick={() => setSidebarOpen(true)} type="button">
               <Icon name="menu" />
             </button>
-            <div><span>{heading.eyebrow}</span><h1>{heading.title}</h1></div>
           </div>
           <div className="topbar-actions">
             <div className="profile-button" aria-label="Tài khoản quản trị viên">
-              <span className="avatar avatar-indigo">NT</span>
-              <span className="profile-copy"><strong>Nguyễn Thảo</strong><small>Quản trị viên</small></span>
+              <span className="avatar avatar-indigo">{chuCaiDau(taiKhoan.hoTen)}</span>
+              <span className="profile-copy"><strong>{taiKhoan.hoTen}</strong><small>Quản trị viên</small></span>
             </div>
+            <NavLink aria-label="Đổi mật khẩu" className="icon-button" title="Đổi mật khẩu" to="/doi-mat-khau"><Icon name="lock" size={18} /></NavLink>
+            <button aria-label="Đăng xuất" className="icon-button" onClick={() => void dangXuat()} title="Đăng xuất" type="button"><Icon name="logout" size={18} /></button>
           </div>
         </header>
         <main className="admin-content"><Outlet /></main>

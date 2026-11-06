@@ -15,6 +15,37 @@ export type ProblemDetails = {
   code?: string;
   errors?: ValidationErrors;
   traceId?: string;
+  /** Có khi `code = AUTH_ACCOUNT_LOCKED`: thời điểm hết tạm khóa (UTC). */
+  khoaDen?: string;
+};
+
+export type VaiTro = "ADMIN" | "THISINH";
+
+export type TaiKhoanHienTai = {
+  mtk: number;
+  tenDN: string;
+  hoTen: string;
+  vaiTro: VaiTro;
+  /** Mã số thí sinh; null với quản trị viên. */
+  msts: string | null;
+  phaiDoiMatKhau: boolean;
+};
+
+export type PhienDangNhap = {
+  accessToken: string;
+  hetHan: string;
+  taiKhoan: TaiKhoanHienTai;
+};
+
+export type DangNhapRequest = {
+  tenDN: string;
+  matKhau: string;
+  ghiNho: boolean;
+};
+
+export type DoiMatKhauRequest = {
+  matKhauCu: string;
+  matKhauMoi: string;
 };
 
 /** Một trang của API danh sách có phân trang (mục 1.3). */

@@ -1,3 +1,5 @@
+using CampusExam.Api.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using CampusExam.Api.Common;
 using CampusExam.Application.Common;
 using CampusExam.Application.QuestionImports;
@@ -6,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace CampusExam.Api.Controllers;
 
 [ApiController]
+[Authorize(Policy = Policies.AdminOnly)]
 [Route("api/nhap-cau-hoi")]
 public sealed class QuestionImportsController(
     IQuestionDocxParser parser) : ControllerBase

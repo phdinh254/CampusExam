@@ -1,26 +1,35 @@
 using System.Net;
 using System.Net.Http.Headers;
-using System.Net.Http.Json;
 using System.Text.Json;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Mvc.Testing;
+using CampusExam.IntegrationTests.Api;
+using CampusExam.IntegrationTests.Database;
 using Xunit;
 
 namespace CampusExam.IntegrationTests;
 
 /// <summary>
-/// Kiểm tra hợp đồng HTTP qua pipeline thật (routing, model binding, ProblemDetails, OpenAPI).
-/// Các request ở đây bị chặn trước khi chạm database.
+/// Kiểm tra hợp đồng HTTP qua pipeline thật (routing, model binding, ProblemDetails, OpenAPI)
+/// với tài khoản quản trị đã đăng nhập.
 /// </summary>
-public sealed class ApiContractHttpTests(ApiContractHttpTests.ApiFactory factory)
-    : IClassFixture<ApiContractHttpTests.ApiFactory>
+[Collection(SqlServerCollection.Name)]
+public sealed class ApiContractHttpTests(SqlServerDatabaseFixture database) : IAsyncLifetime
 {
-    private readonly HttpClient _client = factory.CreateClient();
+    private readonly HttpClient _client = CampusExamApiFactory.For(database).TaoClient();
+    private string _token = string.Empty;
+
+    public async Task InitializeAsync()
+    {
+        await database.ResetAsync();
+        await DuLieuXacThuc.TaoAdminAsync(database);
+        _token = await _client.LayTokenAdminAsync();
+    }
+
+    public Task DisposeAsync() => Task.CompletedTask;
 
     [Fact]
     public async Task Validation_error_has_stable_code_and_trace_id()
     {
-        var response = await _client.PostAsJsonAsync("/api/kqht", new { });
+        var response = await _client.GuiAsync(HttpMethod.Post, "/api/kqht", _token, body: new { });
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
@@ -36,11 +45,15 @@ public sealed class ApiContractHttpTests(ApiContractHttpTests.ApiFactory factory
     [InlineData("1")]
     public async Task Kqht_status_only_accepts_vietnamese_strings(string trangThaiJson)
     {
-        var body = $$"""{"tenKQHT":"Nhớ","thuTu":1,"kyHieu":"A","trangThai":{{trangThaiJson}}}""";
+        var request = new HttpRequestMessage(HttpMethod.Post, "/api/kqht")
+        {
+            Content = new StringContent(
+                $$"""{"tenKQHT":"Nhớ","thuTu":1,"kyHieu":"A","trangThai":{{trangThaiJson}}}""",
+                MediaTypeHeaderValue.Parse("application/json"))
+        };
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _token);
 
-        var response = await _client.PostAsync(
-            "/api/kqht",
-            new StringContent(body, MediaTypeHeaderValue.Parse("application/json")));
+        var response = await _client.SendAsync(request);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         var raw = await response.Content.ReadAsStringAsync();
@@ -52,6 +65,17 @@ public sealed class ApiContractHttpTests(ApiContractHttpTests.ApiFactory factory
         // Lỗi đọc JSON không được kéo theo lỗi "command is required" hay lộ tên kiểu nội bộ.
         Assert.False(errors.TryGetProperty("command", out _));
         Assert.DoesNotContain("CampusExam.", raw);
+    }
+
+    [Fact]
+    public async Task Kqht_created_through_api_returns_status_string()
+    {
+        var response = await _client.GuiAsync(HttpMethod.Post, "/api/kqht", _token,
+            body: new { tenKQHT = "Nhớ", thuTu = 1, kyHieu = "A" });
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        using var body = await ReadJsonAsync(response);
+        Assert.Equal("dang_su_dung", body.RootElement.GetProperty("trangThai").GetString());
     }
 
     [Fact]
@@ -86,6 +110,7 @@ public sealed class ApiContractHttpTests(ApiContractHttpTests.ApiFactory factory
         Assert.True(paths.TryGetProperty("/api/nhap-cau-hoi/xem-truoc", out _));
         Assert.True(paths.TryGetProperty("/api/kqht", out _));
         Assert.True(paths.TryGetProperty("/api/muc-do", out _));
+        Assert.True(paths.TryGetProperty("/api/xac-thuc/dang-nhap", out _));
         Assert.False(paths.TryGetProperty("/api/question-imports/preview", out _));
     }
 
@@ -96,21 +121,11 @@ public sealed class ApiContractHttpTests(ApiContractHttpTests.ApiFactory factory
         file.Headers.ContentType = MediaTypeHeaderValue.Parse("application/octet-stream");
         content.Add(file, "file", fileName);
 
-        return _client.PostAsync(url, content);
+        var request = new HttpRequestMessage(HttpMethod.Post, url) { Content = content };
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _token);
+        return _client.SendAsync(request);
     }
 
     private static async Task<JsonDocument> ReadJsonAsync(HttpResponseMessage response) =>
         JsonDocument.Parse(await response.Content.ReadAsStringAsync());
-
-    public sealed class ApiFactory : WebApplicationFactory<Program>
-    {
-        protected override void ConfigureWebHost(IWebHostBuilder builder)
-        {
-            builder.UseEnvironment("Development");
-            // Không request nào trong lớp test này mở kết nối; chuỗi chỉ để Program khởi động được.
-            builder.UseSetting(
-                "ConnectionStrings:CampusExam",
-                "Server=127.0.0.1,1;Database=KhongDung;Connect Timeout=1");
-        }
-    }
 }

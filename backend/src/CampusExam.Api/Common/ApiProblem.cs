@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using CampusExam.Application.Common;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CampusExam.Api.Common;
@@ -27,6 +28,18 @@ public static class ApiProblem
             problemDetails.Extensions["traceId"] = traceId;
         }
 
+        return problemDetails;
+    }
+
+    /// <summary>Lỗi 400 kèm lỗi theo trường; khóa là tên trường JSON (camelCase).</summary>
+    public static ProblemDetails Validation(
+        HttpContext? httpContext,
+        IDictionary<string, string[]> errors,
+        string code = ErrorCodes.ValidationFailed,
+        string title = "Dữ liệu không hợp lệ")
+    {
+        var problemDetails = Create(httpContext, StatusCodes.Status400BadRequest, title, code);
+        problemDetails.Extensions["errors"] = errors;
         return problemDetails;
     }
 }

@@ -1,12 +1,16 @@
 import { Link } from "react-router-dom";
 
 import { Icon } from "../../components/Icon";
+import { useTaiKhoan } from "../auth/AuthProvider";
+import { tenGoi } from "../auth/authUtils";
 
 export default function StudentDashboard() {
+  const taiKhoan = useTaiKhoan();
+
   return (
     <div className="student-dashboard">
       <section className="student-welcome">
-        <div><span className="eyebrow">THỨ SÁU, 06 THÁNG 11</span><h1>Chào Minh Long!</h1></div>
+        <div><span className="eyebrow">THỨ SÁU, 06 THÁNG 11</span><h1>Chào {tenGoi(taiKhoan.hoTen)}!</h1></div>
         <div className="student-semester"><small>HỌC KỲ HIỆN TẠI</small><strong>Học kỳ I · 2026–2027</strong></div>
       </section>
 

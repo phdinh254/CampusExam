@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
 
 import { Icon, type IconName } from "../../components/Icon";
+import { useTaiKhoan } from "../auth/AuthProvider";
+import { tenGoi } from "../auth/authUtils";
 
 const stats: { label: string; value: string; delta: string; icon: IconName; tone: string }[] = [
   { label: "Tổng câu hỏi", value: "2,480", delta: "+124 tháng này", icon: "book", tone: "indigo" },
@@ -17,10 +19,12 @@ const activities = [
 ];
 
 export default function AdminDashboard() {
+  const taiKhoan = useTaiKhoan();
+
   return (
     <div className="page-stack">
       <section className="welcome-row">
-        <div><h2>Chào buổi sáng, Thảo!</h2></div>
+        <div><h2>Chào {tenGoi(taiKhoan.hoTen)}!</h2></div>
         <div className="date-chip"><Icon name="calendar" size={18} /><span><small>HÔM NAY</small><strong>06 tháng 11, 2026</strong></span></div>
       </section>
 

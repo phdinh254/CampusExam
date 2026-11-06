@@ -5,8 +5,6 @@
 .sidebar-link { min-height: 46px; padding-inline: 13px; font-size: 13px; }
 .sidebar-link.active::before { left: -14px; }
 .topbar { min-height: 68px; padding-inline: 22px; }
-.topbar-title span { font-size: 10px; }
-.topbar-title h1 { font-size: 18px; }
 .profile-button { cursor: default; }
 .profile-copy strong { font-size: 12px; }
 .profile-copy small { font-size: 10px; }

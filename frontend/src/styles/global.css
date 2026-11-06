@@ -3,6 +3,7 @@
 @import "./admin-pages.css";
 @import "./student-exam.css";
 @import "./refinements.css";
+@import "./auth.css";
 @import "./responsive.css";
 
 :root {

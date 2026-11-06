@@ -187,17 +187,18 @@ xanh; không có secret trong Git; frontend gọi được API.
 
 ### Giai đoạn 1 - Xác thực và tài khoản (Tuần 2-3, đến 22/11/2026)
 
-- [ ] API đăng nhập, refresh, đăng xuất, `me`, đổi mật khẩu.
-- [ ] Hash mật khẩu bằng `PasswordHasher` của ASP.NET Core.
-- [ ] Access token ngắn hạn; refresh token trong cookie `HttpOnly`/`Secure`/`SameSite`,
+- [x] API đăng nhập, refresh, đăng xuất, `me`, đổi mật khẩu.
+- [x] Hash mật khẩu bằng `PasswordHasher` của ASP.NET Core.
+- [x] Access token ngắn hạn; refresh token trong cookie `HttpOnly`/`Secure`/`SameSite`,
   lưu hash ở `PHIENDANGNHAP`, xoay vòng và thu hồi phiên.
-- [ ] Đổi `MABAOMAT` khi đổi mật khẩu/khóa tài khoản để vô hiệu phiên cũ.
-- [ ] Khóa tạm sau nhiều lần sai (`SOLANDNSAI`, `KHOADEN`); rate limit đăng nhập;
+- [~] Đổi `MABAOMAT` khi đổi mật khẩu/khóa tài khoản để vô hiệu phiên cũ (xong đổi
+  mật khẩu; khóa tài khoản làm cùng quản trị tài khoản).
+- [x] Khóa tạm sau nhiều lần sai (`SOLANDNSAI`, `KHOADEN`); rate limit đăng nhập;
   thông báo lỗi không lộ tài khoản có tồn tại.
-- [ ] Bắt buộc đổi mật khẩu lần đầu (`PHAIDOIMATKHAU`).
-- [ ] Policy `AdminOnly`, `CandidateOnly`; áp cho các API hiện có.
+- [x] Bắt buộc đổi mật khẩu lần đầu (`PHAIDOIMATKHAU`).
+- [x] Policy `AdminOnly`, `CandidateOnly`; áp cho các API hiện có.
 - [ ] Quản trị tài khoản: tạo admin, khóa/mở, reset mật khẩu, có audit.
-- [ ] UI đăng nhập, đổi mật khẩu, route guard, gia hạn phiên.
+- [x] UI đăng nhập, đổi mật khẩu, route guard, gia hạn phiên.
 
 **Nghiệm thu:** mỗi vai trò chỉ vào đúng route/API; token hết hạn được xử lý; tài
 khoản bị khóa mất quyền; có test cho đăng nhập sai, khóa tạm, thu hồi phiên.

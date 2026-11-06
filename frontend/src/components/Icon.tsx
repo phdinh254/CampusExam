@@ -2,6 +2,7 @@ import type { SVGProps } from "react";
 
 export type IconName =
   | "activity"
+  | "alert"
   | "arrow-left"
   | "arrow-right"
   | "book"
@@ -15,6 +16,7 @@ export type IconName =
   | "home"
   | "layers"
   | "lock"
+  | "logout"
   | "menu"
   | "search"
   | "sparkles"
@@ -22,6 +24,7 @@ export type IconName =
 
 const paths: Record<IconName, React.ReactNode> = {
   activity: <><path d="M4 12h3l2-7 4 14 2-7h5" /><path d="M4 4v16h16" /></>,
+  alert: <><circle cx="12" cy="12" r="9" /><path d="M12 7.5v5.5M12 16.5h.01" /></>,
   "arrow-left": <><path d="m15 18-6-6 6-6" /><path d="M9 12h10" /></>,
   "arrow-right": <><path d="m9 18 6-6-6-6" /><path d="M5 12h10" /></>,
   book: <><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z" /></>,
@@ -35,6 +38,7 @@ const paths: Record<IconName, React.ReactNode> = {
   home: <><path d="m3 11 9-8 9 8" /><path d="M5 10v10h14V10M9 20v-6h6v6" /></>,
   layers: <><path d="m12 2 9 5-9 5-9-5Z" /><path d="m3 12 9 5 9-5M3 17l9 5 9-5" /></>,
   lock: <><rect x="4" y="10" width="16" height="11" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></>,
+  logout: <><path d="M10 17l5-5-5-5M15 12H3" /><path d="M13 3h6a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-6" /></>,
   menu: <><path d="M4 6h16M4 12h16M4 18h16" /></>,
   search: <><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></>,
   sparkles: <><path d="m12 3-1 3.5L7.5 8 11 9.5l1 3.5 1-3.5L16.5 8 13 6.5Z" /><path d="m5 14-.7 2.3L2 17l2.3.7L5 20l.7-2.3L8 17l-2.3-.7Z" /><path d="m19 13-.6 1.9-1.9.6 1.9.6L19 18l.6-1.9 1.9-.6-1.9-.6Z" /></>,

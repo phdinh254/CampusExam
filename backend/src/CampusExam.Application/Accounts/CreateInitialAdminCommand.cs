@@ -25,20 +25,16 @@ public sealed class CreateInitialAdminCommand : IValidatableObject
             yield return new ValidationResult("Họ tên là bắt buộc.", [nameof(HoTen)]);
         }
 
-        if (string.IsNullOrEmpty(MatKhau))
+        // Độ dài và bắt buộc đã do attribute kiểm tra; ở đây chỉ thêm các quy tắc nội dung.
+        if (string.IsNullOrEmpty(MatKhau) || MatKhau.Length < ChinhSachMatKhau.DoDaiToiThieu)
         {
             yield break;
         }
 
-        if (!MatKhau.Any(char.IsLetter) || !MatKhau.Any(char.IsDigit))
+        foreach (var loi in ChinhSachMatKhau.KiemTra(MatKhau, TenDN)
+                     .Where(loi => !loi.StartsWith("Mật khẩu dài", StringComparison.Ordinal)))
         {
-            yield return new ValidationResult("Mật khẩu phải có cả chữ và số.", [nameof(MatKhau)]);
-        }
-
-        if (!string.IsNullOrWhiteSpace(TenDN)
-            && MatKhau.Contains(TenDN.Trim(), StringComparison.OrdinalIgnoreCase))
-        {
-            yield return new ValidationResult("Mật khẩu không được chứa tên đăng nhập.", [nameof(MatKhau)]);
+            yield return new ValidationResult(loi, [nameof(MatKhau)]);
         }
     }
 }

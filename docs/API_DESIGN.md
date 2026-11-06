@@ -607,7 +607,8 @@ API; đổi sang tiếng Việt hay không là quyết định riêng của giao
   `ProblemDetails` trong từng controller như `KqhtController` hiện nay.
 - **Xác thực:** `Microsoft.AspNetCore.Authentication.JwtBearer`; khóa ký đặt trong
   User Secrets (`Auth:SigningKey`), không commit. `OnTokenValidated` so `sstamp`
-  với `MABAOMAT` (cache ngắn 30 giây để không truy vấn mỗi request).
+  với `MABAOMAT` bằng một truy vấn theo khóa chính mỗi request (P0 không cache, để
+  đổi mật khẩu/khóa tài khoản có hiệu lực ngay).
 - **Rate limit:** `AddRateLimiter` — policy `dang-nhap` (10/phút/IP), `tu-dong-luu`
   (60/phút/bài làm).
 - **CORS:** không cần khi dev (proxy cùng origin). Khi triển khai khác origin mới
@@ -660,3 +661,41 @@ API; đổi sang tiếng Việt hay không là quyết định riêng của giao
   làm mới phiên single-flight khi 401, `NETWORK_ERROR`, tải blob, query builder),
   `authSession`, `types/api.ts`, `features/learning-outcomes/api.ts`,
   `features/question-bank/importApi.ts`; Vitest 4.1.12, `npm test`.
+
+### Bước 2 — xong (06/11/2026)
+
+Backend:
+
+- `POST /api/xac-thuc/dang-nhap`, `lam-moi`, `dang-xuat`, `doi-mat-khau`,
+  `GET /api/xac-thuc/toi` theo mục 2.1. `dang-xuat` không cần access token (chỉ
+  cookie + `X-CSRF`) để vẫn đăng xuất được khi token đã hết hạn. `doi-mat-khau`
+  trả phiên mới (body như đăng nhập + cookie mới) vì mọi phiên cũ bị thu hồi.
+- Refresh token 256 bit, lưu SHA-256; xoay vòng mỗi lần làm mới với cập nhật có
+  điều kiện (hai request cùng token chỉ một thắng). Token đã xoay vòng bị dùng lại
+  sau 30 giây ⇒ thu hồi mọi phiên của tài khoản; trong 30 giây (nhiều tab cùng làm
+  mới) chỉ trả 401. Thời hạn phiên trượt theo thời hạn ban đầu (12 giờ hoặc 7 ngày).
+- Khóa tạm 15 phút sau 5 lần sai; tên đăng nhập không tồn tại vẫn băm mật khẩu giả
+  để thời gian phản hồi giống sai mật khẩu. Rate limit 10 lần/phút/IP cho đăng nhập.
+- Middleware chặn `403 AUTH_PASSWORD_CHANGE_REQUIRED` khi token có `doi_mk = 1`,
+  trừ controller `/api/xac-thuc`. Fallback policy bắt buộc đăng nhập; `AdminOnly`
+  áp cho `/api/kqht`, `/api/muc-do`, `/api/nhap-cau-hoi`; `/api/health` và OpenAPI
+  ẩn danh. 401/403 đều trả ProblemDetails có `code`.
+- Ánh xạ EF bảng `THISINH`; `ChinhSachMatKhau` dùng chung (bootstrap admin và đổi
+  mật khẩu), kiểm tra thêm "không chứa ngày sinh" với thí sinh.
+- Ghi `NHATKYHD` nhóm `XACTHUC`: đăng nhập (thành công/thất bại kèm lý do), tạm
+  khóa, đăng xuất, đổi mật khẩu, thu hồi mọi phiên — đều có IP.
+- Cấu hình `Auth` (`AuthOptions`): `SigningKey` trong User Secrets;
+  `AllowedOrigins` trong `appsettings.Development.json`.
+
+Frontend:
+
+- `AuthProvider` (khôi phục phiên bằng cookie khi tải trang, handler làm mới cho
+  `httpClient`, đăng xuất khi phiên hết hạn), `RequireRole` cho `/admin` (ADMIN),
+  `/candidate` và `/exam` (THISINH); tài khoản phải đổi mật khẩu luôn bị đưa về
+  `/doi-mat-khau`.
+- Trang đăng nhập gọi API thật, hiển thị lỗi theo `code`, có "Ghi nhớ đăng nhập";
+  nút chọn vai trò chỉ đổi gợi ý nhập liệu. Thêm trang đổi mật khẩu.
+- Layout và lời chào dùng tên thật; có nút đổi mật khẩu và đăng xuất.
+
+Chưa làm (để bước sau): quản trị tài khoản (khóa/mở, cấp lại mật khẩu) đi cùng
+CRUD thí sinh ở bước 4.

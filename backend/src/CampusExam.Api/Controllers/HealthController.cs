@@ -1,9 +1,11 @@
+using Microsoft.AspNetCore.Authorization;
 using CampusExam.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CampusExam.Api.Controllers;
 
 [ApiController]
+[AllowAnonymous]
 [Route("api/health")]
 public class HealthController : ControllerBase
 {

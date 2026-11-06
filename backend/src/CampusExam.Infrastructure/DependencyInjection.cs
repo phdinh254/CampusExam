@@ -1,4 +1,6 @@
 using CampusExam.Application.Accounts;
+using CampusExam.Application.Auth;
+using CampusExam.Infrastructure.Services;
 using CampusExam.Application.Interfaces.Security;
 using CampusExam.Application.Kqht;
 using CampusExam.Application.MucDo;
@@ -21,6 +23,8 @@ public static class DependencyInjection
         services.AddSingleton<IQuestionDocxParser, OpenXmlQuestionDocxParser>();
         services.AddSingleton<IPasswordHasher, AspNetPasswordHasher>();
         services.AddScoped<IInitialAdminService, EfInitialAdminService>();
+        services.AddScoped<IAuthService, EfAuthService>();
+        services.AddSingleton(TimeProvider.System);
 
         return services;
     }
