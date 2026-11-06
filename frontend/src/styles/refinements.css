@@ -1,0 +1,169 @@
+/* Denser layout and readable type for the implemented product areas. */
+.admin-shell { grid-template-columns: 214px minmax(0, 1fr); }
+.admin-sidebar { padding: 22px 14px 18px; }
+.admin-sidebar .brand-lockup { margin-bottom: 30px; }
+.sidebar-link { min-height: 46px; padding-inline: 13px; font-size: 13px; }
+.sidebar-link.active::before { left: -14px; }
+.topbar { min-height: 68px; padding-inline: 22px; }
+.topbar-title span { font-size: 10px; }
+.topbar-title h1 { font-size: 18px; }
+.profile-button { cursor: default; }
+.profile-copy strong { font-size: 12px; }
+.profile-copy small { font-size: 10px; }
+.admin-content { padding: 20px 22px 32px; }
+.page-stack { width: 100%; max-width: none; gap: 18px; }
+
+.welcome-row h2,
+.page-heading-row h2 { margin-bottom: 0; font-size: 24px; }
+.welcome-row p,
+.page-heading-row p { font-size: 12px; }
+.date-chip { min-width: 194px; }
+.date-chip small { font-size: 9px; }
+.date-chip strong { font-size: 11px; }
+
+.stat-card { min-height: 106px; align-items: center; padding: 18px; }
+.stat-icon { width: 44px; height: 44px; }
+.stat-card-main > span { font-size: 12px; }
+.stat-card-main > strong { font-size: 27px; }
+.stat-card-main small { font-size: 10px; }
+.panel-heading { padding: 18px 20px 14px; }
+.panel-heading h3 { font-size: 15px; }
+.panel-heading p { font-size: 11px; }
+.panel-heading > a { font-size: 11px; }
+.chart-summary strong { font-size: 24px; }
+.chart-summary span,
+.chart-summary small { font-size: 10px; }
+.bar-column small { font-size: 9px; }
+.exam-list-copy > strong { font-size: 12px; }
+.exam-list-copy > span { font-size: 10px; }
+.tag { padding: 4px 7px; font-size: 9px; }
+.activity-item { padding: 12px 0; }
+.activity-item strong { font-size: 11px; }
+.activity-item small { font-size: 9px; }
+
+.mini-stats-grid > div { min-height: 78px; padding: 16px; }
+.mini-stat-icon { width: 42px; height: 42px; }
+.mini-stats-grid small { font-size: 9px; }
+.mini-stats-grid strong { font-size: 20px; }
+.mini-stats-grid em { font-size: 10px; }
+.table-toolbar { padding: 13px 16px; }
+.search-box { height: 42px; }
+.search-box.small { min-width: 280px; height: 38px; }
+.search-box input { font-size: 12px; }
+.table-toolbar select { height: 42px; font-size: 11px; }
+.data-table { min-width: 760px; }
+.data-table th { padding: 12px 14px; font-size: 9px; }
+.data-table td { padding: 14px; font-size: 12px; }
+.data-table th:first-child,
+.data-table td:first-child { padding-left: 18px; }
+.question-table .question-cell { max-width: none; }
+.question-code { font-size: 11px; }
+.question-cell strong,
+.exam-name-cell strong,
+.student-name-cell strong,
+.date-cell strong { font-size: 12px; }
+.question-cell small,
+.date-cell small,
+.exam-name-cell small,
+.student-name-cell small { font-size: 9px; }
+.outcome-badge,
+.level-badge,
+.status-dot,
+.exam-status { font-size: 10px; }
+.table-footer { min-height: 54px; font-size: 11px; }
+.empty-state strong { font-size: 14px; }
+.empty-state span { font-size: 11px; }
+
+.exam-overview { grid-template-columns: 1fr 320px; }
+.exam-overview-main { padding: 26px 30px; }
+.exam-overview-main h3 { font-size: 24px; }
+.exam-overview-main > p { font-size: 11px; }
+.live-stats strong { font-size: 22px; }
+.live-stats span { font-size: 10px; }
+.live-clock > span { font-size: 10px; }
+.live-clock small { font-size: 9px; }
+.candidate-count { font-size: 11px; }
+.progress-cell strong { font-size: 10px; }
+
+.student-header { padding-inline: 24px; }
+.student-header .brand-lockup { margin-right: 28px; }
+.student-area-label { padding-left: 28px; border-left: 1px solid var(--line); color: #707b8e; font-size: 12px; font-weight: 700; }
+.student-profile strong { font-size: 12px; }
+.student-profile small { font-size: 9px; }
+.student-content { width: calc(100% - 32px); max-width: none; padding-top: 24px; }
+.student-welcome h1 { font-size: 26px; }
+.student-welcome p { font-size: 12px; }
+.student-semester small { font-size: 9px; }
+.student-semester strong { font-size: 11px; }
+.next-exam-card { grid-template-columns: 120px minmax(0, 1fr) 310px; }
+.next-exam-main h2 { font-size: 25px; }
+.next-exam-main > p { font-size: 11px; }
+.live-pill { font-size: 9px; }
+.exam-facts span { font-size: 11px; }
+.countdown-block > small { font-size: 9px; }
+.countdown-block strong { font-size: 28px; }
+.countdown-block span small { font-size: 8px; }
+.countdown-block .button { min-height: 40px; font-size: 11px; }
+.student-grid { grid-template-columns: minmax(0, 1.75fr) minmax(280px, .65fr); }
+.student-exam-item { grid-template-columns: 44px minmax(190px, 1fr) auto auto; }
+.student-exam-item > div:nth-child(2) strong { font-size: 12px; }
+.student-exam-item > div:nth-child(2) span,
+.location-pill { font-size: 10px; }
+.recent-results p strong { font-size: 12px; }
+.recent-results p small { font-size: 10px; }
+.grade-badge { font-size: 9px; }
+.semester-card .eyebrow { font-size: 9px; }
+.average-score small,
+.semester-stats span { font-size: 10px; }
+.notice-card h3 { font-size: 12px; }
+.notice-card p { margin-bottom: 0; font-size: 10px; }
+
+.exam-workspace { grid-template-columns: minmax(0, 1fr) 310px; }
+.exam-question-area { padding: 18px 20px 28px; }
+.exam-progress-row,
+.question-card { max-width: none; }
+.exam-progress-row span { font-size: 9px; }
+.exam-progress-row strong { font-size: 11px; }
+.question-content { padding: 28px 30px; }
+.question-content h1 { max-width: none; font-size: 19px; }
+.question-content > p { font-size: 11px; }
+.answer-list strong { font-size: 13px; }
+.question-card > header button,
+.question-number,
+.question-level { font-size: 10px; }
+.question-card > footer > span { font-size: 9px; }
+.timer-card span,
+.timer-card small { font-size: 9px; }
+.question-map-heading h2 { font-size: 13px; }
+.question-map-heading p,
+.question-map-heading > span { font-size: 9px; }
+.question-legend { font-size: 8px; }
+.question-grid button { font-size: 10px; }
+.exam-save-note strong { font-size: 9px; }
+.exam-save-note small { font-size: 8px; }
+
+.showcase-copy > p { font-size: 15px; }
+.login-subtitle { font-size: 13px; }
+.field-label { font-size: 12px; }
+.role-switcher button,
+.input-wrap input { font-size: 13px; }
+
+@media (max-width: 1100px) {
+  .admin-shell { grid-template-columns: 204px minmax(0, 1fr); }
+  .student-grid { grid-template-columns: 1fr; }
+  .student-side-column { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 860px) {
+  .admin-shell { grid-template-columns: 1fr; }
+  .admin-content { padding-inline: 16px; }
+  .student-area-label { display: none; }
+  .student-content { width: calc(100% - 24px); }
+}
+
+@media (max-width: 620px) {
+  .admin-content { padding-inline: 10px; }
+  .topbar { padding-inline: 12px; }
+  .student-content { width: calc(100% - 20px); }
+  .student-exam-item { grid-template-columns: 44px 1fr; }
+}
