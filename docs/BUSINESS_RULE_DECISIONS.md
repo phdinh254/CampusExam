@@ -1,0 +1,199 @@
+# Quyết định nghiệp vụ CampusExam
+
+Ngày cập nhật gần nhất: 05/11/2026.
+
+Tài liệu này ghi các quyết định ảnh hưởng trực tiếp đến schema, API và kiểm thử.
+Một quyết định chỉ chuyển sang **Đã chốt** khi được người phụ trách đồ án xác nhận.
+
+## D-KQHT-01 — Ký hiệu, trạng thái và quy tắc xóa KQHT
+
+**Trạng thái:** Chốt một phần từ tài liệu yêu cầu; trạng thái KQHT vẫn chờ xác nhận.
+
+### Dữ kiện đã xác nhận
+
+- `dbo.KQHOCTAP.TRANGTHAI` là `smallint NOT NULL`.
+- Script hiện tại không có CHECK constraint và không mô tả ý nghĩa từng giá trị.
+- `KYHIEU` là `char(1)`, duy nhất toàn ngân hàng và dùng để tạo mã câu hỏi.
+- `KQHOCTAP` được tham chiếu bởi `CAUHOI` và `CAU_TRUC`.
+- Vì có khóa ngoại, không được mặc định coi xóa cứng là thao tác an toàn.
+
+### Quy tắc đã chốt từ tài liệu yêu cầu
+
+- Mỗi câu hỏi phải xác định rõ thuộc KQHT nào và mức độ đánh giá nào.
+- `KYHIEU` cố định theo thứ tự KQHT: `A` - KQHT 1, `B` - KQHT 2, `C` - KQHT 3,
+  `D` - KQHT 4, ... Do đó `KYHIEU` là chữ cái thứ `THUTU` và `THUTU` chỉ từ `1`
+  đến `26` (tối đa 26 KQHT).
+- Mã mức độ gồm `1` dễ, `2` trung bình và `3` khó.
+- Mã câu hỏi có dạng `[KyHieu][MaMD]-[STT]`, ví dụ `A1-1` hoặc `B1-24`.
+- Mã câu hỏi là duy nhất; `STT` trong mã là số nguyên dương.
+- Biểu thức kiểm tra mã câu hỏi chuẩn là `^[A-Z][1-3]-[1-9][0-9]*$`.
+
+### Thực thi quy tắc
+
+- `CreateKqhtCommand` từ chối `THUTU` ngoài `1..26` và `KYHIEU` không khớp
+  `THUTU`.
+- Migration `20261105_02_rang_buoc_ma_cau_hoi.sql` thêm CHECK
+  `KYHIEU = CHAR(64 + THUTU)`, khóa ngoại `CAUHOI(MAKQHT, KYHIEU)` và CHECK
+  `MACAUHOI = KYHIEU + MAMD + '-' + STT`. Hệ quả: không đổi được thứ tự hoặc
+  ký hiệu của KQHT đã có câu hỏi.
+
+### Giả định đang tồn tại trong mã nguồn
+
+`CreateKqhtCommand` hiện còn giả định `TRANGTHAI` chỉ nhận `0` hoặc `1`. Giả
+định này chưa được PDM/script hoặc tài liệu nghiệp vụ xác nhận.
+
+### Phương án đề xuất
+
+#### Phương án A — Hai trạng thái
+
+- `0`: Ngừng sử dụng.
+- `1`: Đang sử dụng.
+- KQHT mới mặc định ở trạng thái `1`.
+- Cho phép chuyển `1 → 0` và `0 → 1`.
+- Chỉ xóa cứng KQHT chưa được tham chiếu; KQHT đã được dùng chỉ chuyển sang `0`.
+- Sau khi rà dữ liệu hiện có, bổ sung CHECK `TRANGTHAI IN (0,1)` bằng script
+  cập nhật riêng.
+
+#### Phương án B — Ba trạng thái
+
+- `0`: Nháp.
+- `1`: Đang sử dụng.
+- `2`: Ngừng sử dụng.
+- KQHT mới mặc định ở trạng thái `0`.
+- Luồng chính: `0 → 1 → 2`; việc khôi phục `2 → 1` cần chốt thêm.
+- Không xóa cứng KQHT đã được tham chiếu.
+- Sau khi rà dữ liệu hiện có, bổ sung CHECK `TRANGTHAI IN (0,1,2)` bằng script
+  cập nhật riêng.
+
+### Quyết định cần xác nhận
+
+Chọn phương án A, phương án B hoặc cung cấp bảng trạng thái khác. Đồng thời xác
+nhận `THUTU` có bắt buộc lớn hơn 0 hay không.
+
+Sau khi chốt cần cập nhật đồng bộ validation, API, giao diện, test nghiệp vụ và
+script CHECK constraint riêng; không tự động migrate khi khởi động.
+
+## T-KQHT-01 — Kiểm thử phần ghi KQHT
+
+**Trạng thái:** Đã chuyển sang SQL Server thật (05/11/2026); còn thiếu test tranh
+chấp ghi đồng thời.
+
+- Test tạo KQHT, trùng `KYHIEU` và CHECK `CKT_KQHOCTAP_KYHIEU` chạy trên database
+  tạm dựng từ `CampusExamDB.sql` (`SqlServerDatabaseFixture`).
+- Chưa có test hai request ghi đồng thời cùng `KYHIEU` để đi vào nhánh bắt lỗi
+  2601/2627.
+
+## D-IMPORT-01 — Định dạng nhập ngân hàng câu hỏi
+
+**Trạng thái:** Đã chốt cho P0.
+
+- Định dạng nhập chính thức là `.docx` theo mẫu bảng IU03 gồm 6 cột.
+- `.doc` là định dạng cũ, chỉ được chuyển đổi một lần sang `.docx` ở ngoài hệ
+  thống; API không cài Microsoft Word hoặc LibreOffice để đọc `.doc` khi chạy.
+- Cột mã câu hỏi là bắt buộc. Không tự đoán KQHT hoặc mức độ khi mã bị trống.
+- Nội dung trong một ô được tách thành câu hỏi và bốn phương án A/B/C/D.
+- Hình ảnh là dữ liệu bắt buộc phải bảo toàn đúng vị trí trong nội dung hoặc
+  phương án; không lưu Base64 trong các cột văn bản.
+- Import phải có bước preview. Chỉ ghi database sau khi người dùng xác nhận và
+  mọi lỗi chặn đã được xử lý.
+- File thí sinh vẫn dùng `.xlsx`; quyết định này chỉ thay đổi import câu hỏi.
+
+## D-MEDIA-01 — Tài nguyên hình ảnh câu hỏi
+
+**Trạng thái:** Đã chốt cho P0.
+
+- Metadata tài nguyên được lưu trong `TAINGUYEN_CAUHOI`; nội dung nhị phân được
+  lưu ở file storage/object storage thông qua `STORAGEKEY`.
+- `VITRI` nhận một trong `NOIDUNG`, `DAA`, `DAB`, `DAC`, `DAD`.
+- `THUTU` bảo toàn thứ tự nhiều ảnh trong cùng một vị trí.
+- API dành cho thí sinh chỉ trả URL đọc được trong thời gian phù hợp, không trả
+  đường dẫn vật lý hoặc storage key nội bộ.
+
+## D-CAUDAN-01 — Đánh dấu câu dẫn trong mẫu IU03
+
+**Trạng thái:** Tạm khóa để tránh suy diễn sai nghiệp vụ.
+
+- File mẫu có cột `Đánh dấu câu dẫn` nhưng toàn bộ 41 dòng đều để trống, nên
+  chưa đủ bằng chứng để thiết kế quan hệ câu dẫn dùng chung.
+- P0 chấp nhận ô trống. Dòng có giá trị ở cột này được đưa ra preview với lỗi
+  chặn `UNSUPPORTED_STEM_MARKER`, không âm thầm bỏ dữ liệu.
+- Chỉ bổ sung entity câu dẫn/nhóm câu sau khi có mẫu thực tế và quy tắc liên kết.
+
+## D-GHICHU-01 — Ghi chú trong mẫu IU03
+
+**Trạng thái:** Đã chốt tạm thời cho P0.
+
+- Ghi chú được hiển thị trong preview và báo cáo import nhưng không phải nội
+  dung đề thi, không trả cho thí sinh.
+- Vì file mẫu hiện không có dòng nào chứa ghi chú, chưa thay đổi bảng `CAUHOI`.
+- Dòng có ghi chú vẫn được import; hệ thống phát cảnh báo để quản trị viên xác
+  nhận trước khi commit. Việc lưu ghi chú lâu dài sẽ được chốt khi có dữ liệu mẫu.
+
+## D-TRANGTHAI-01 — Giá trị các cột trạng thái
+
+**Trạng thái:** Đề xuất, đã áp dụng CHECK trong schema; chờ người phụ trách xác
+nhận. Đổi giá trị thì viết migration mới.
+
+| Cột | Giá trị |
+|---|---|
+| `KQHOCTAP.TRANGTHAI`, `CAUHOI.TRANGTHAI` | `0` ngừng sử dụng, `1` đang sử dụng |
+| `KYTHI.TRANGTHAIKYTHI` | `0` nháp, `1` đã phát hành, `2` đang thi, `3` đã kết thúc, `4` đã hủy |
+| `KYTHI.CACHPHANDE` | `0` ngẫu nhiên, `1` cân bằng lần lượt |
+| `THISINH.GIOITINH` | `0` nữ, `1` nam, `NULL` không khai báo |
+| `TAIKHOAN.TRANGTHAI` | `0` khóa, `1` hoạt động |
+
+Ràng buộc kèm theo trong schema:
+
+- Kỳ thi ở trạng thái `1`-`3` phải có `MADE` và `NGAYPHATHANH`; mỗi đề gốc chỉ
+  gắn cho một kỳ thi.
+- Bài làm `0` (đang làm) chưa có giờ nộp, số câu đúng và điểm; `1`/`2` phải có
+  giờ nộp.
+- Khóa ngoại kép bảo đảm: đề con thuộc đề gốc của kỳ thi, câu trong hoán vị
+  thuộc đề gốc, câu trả lời thuộc đề con được giao. Không đổi được đề của kỳ thi
+  hoặc đề con của phân công đã có bài làm.
+
+## D-THISINH-01 — Tài khoản đăng nhập của thí sinh
+
+**Trạng thái:** Đã chốt (06/11/2026).
+
+### Quy tắc
+
+- Mỗi thí sinh có đúng một tài khoản `TAIKHOAN` (`VAITRO = 'THISINH'`), liên kết
+  qua `THISINH.MTK`; hồ sơ và tài khoản được tạo trong cùng một transaction (thêm
+  thủ công hoặc nhập `.xlsx`).
+- **Tên đăng nhập = mã số thí sinh**: `TAIKHOAN.TENDN = THISINH.MSTS`. Không cho
+  đổi `MSTS` sau khi tạo (là khóa chính và là tên đăng nhập).
+- **Mật khẩu mặc định = ngày sinh** theo dạng `ddMMyyyy`, ví dụ sinh ngày
+  14/03/2005 ⇒ `14032005`. Chỉ lưu hash (`PasswordHasher`), không ghi log.
+- Tài khoản mới có `PHAIDOIMATKHAU = 1`: lần đăng nhập đầu chỉ được gọi API
+  `xac-thuc/*`, phải đổi mật khẩu trước khi vào hệ thống.
+- Mật khẩu mới phải theo chính sách chung (8-128 ký tự, có chữ và số, không chứa
+  tên đăng nhập) và **không được trùng ngày sinh**. Mật khẩu mặc định là ngoại lệ
+  duy nhất của chính sách.
+- **Cấp lại mật khẩu** (admin): đặt lại về ngày sinh, bật `PHAIDOIMATKHAU`, đổi
+  `MABAOMAT` để thu hồi mọi phiên. Có ghi `NHATKYHD`.
+- Sửa ngày sinh trong hồ sơ **không** tự đổi mật khẩu; ngày sinh mới chỉ có hiệu
+  lực ở lần cấp lại tiếp theo.
+- Thí sinh không tự sửa hồ sơ, chỉ đổi được mật khẩu.
+
+### Rủi ro và biện pháp
+
+Ngày sinh dễ đoán, nên người biết ngày sinh có thể đăng nhập trước và đổi mật khẩu
+của thí sinh. Biện pháp bắt buộc:
+
+- Khóa tạm 15 phút sau 5 lần sai liên tiếp; rate limit đăng nhập theo IP.
+- Ghi `NHATKYHD` mỗi lần đăng nhập và đổi mật khẩu (kèm IP) để tra cứu khi có
+  khiếu nại.
+- Danh sách thí sinh cho admin lọc được "chưa đổi mật khẩu mặc định"
+  (`PHAIDOIMATKHAU = 1`) để nhắc thí sinh đổi trước ngày thi.
+- Thí sinh bị chiếm tài khoản: admin cấp lại mật khẩu (về ngày sinh) và xác minh
+  danh tính trực tiếp.
+
+## Các quyết định tiếp theo theo IMPLEMENTATION_PLAN
+
+- Chuyển trạng thái hợp lệ của `CAUHOI` và `KYTHI` (giá trị xem D-TRANGTHAI-01).
+- Quy tắc vào thi muộn và thời điểm kết thúc bài.
+- Quy tắc sửa câu hỏi đã nằm trong đề.
+- Hủy kỳ thi, thi lại, cộng giờ và mở lại bài.
+- Chính sách xem điểm/xem lại và cách làm tròn điểm.
+- Quy tắc import dữ liệu trùng.
