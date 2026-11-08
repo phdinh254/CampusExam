@@ -183,7 +183,8 @@ chỉ thay đổi bằng file mới trong `database/migrations/`; cập nhật �
 - [ ] Bảng lịch sử migration, dữ liệu demo.
 - [~] Frontend: design tokens, component cơ bản, loading/empty (xong); trang
   403/404/lỗi chưa có.
-- [ ] Formatter/linter, CI chạy build + test backend/frontend.
+- [~] CI GitHub Actions chạy format + build + test backend (SQL Server container) và
+  typecheck + test + build frontend (xong 08/11/2026); còn linter frontend (ESLint).
 - [x] README: cài SQL Server, chạy script database, User Secrets, lệnh chạy.
 
 **Nghiệm thu:** máy mới dựng được dự án từ README; script tạo database sạch; CI
@@ -472,7 +473,8 @@ làm song song giai đoạn 0 và 1.
 Đã xong đến 08/11/2026: Git, proxy Vite, README, fixture SQL Server, EF mapping tài
 khoản, bootstrap admin, xác thực backend + frontend, gia cố bảo mật, migration 04.
 
-1. CI build + test backend/frontend (GitHub Actions); formatter/linter.
+1. ~~CI GitHub Actions~~ — xong 08/11/2026 (cần lần chạy xanh đầu tiên sau khi push);
+   còn ESLint cho frontend.
 2. Chốt D-KQHT-01, D-TRANGTHAI-01, quy tắc chuyển trạng thái câu hỏi và D-CAUDAN-01
    trước khi làm CRUD câu hỏi.
 3. Bước 3 `API_DESIGN.md`: KQHT sửa/ngừng dùng, CRUD câu hỏi, nối màn hình ngân hàng.

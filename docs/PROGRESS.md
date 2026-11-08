@@ -167,6 +167,14 @@ Ngày cập nhật gần nhất: 08/11/2026.
   (`Auth:TokenCheckCacheSeconds`); đổi mật khẩu xóa cache ngay. API khóa tài khoản/
   cấp lại mật khẩu sau này phải xóa cache tương tự.
 
+### CI (08/11/2026)
+
+- `.github/workflows/ci.yml`: job backend (restore, `dotnet format --verify-no-changes`,
+  build Release `-warnaserror`, unit + integration test trên container SQL Server 2022)
+  và job frontend (`npm ci`, typecheck, Vitest, build).
+- Đã chạy thử cục bộ từng bước (format sạch, build Release 0 cảnh báo, `npm ci` trên
+  bản sao sạch); chưa có lần chạy trên GitHub vì chưa push.
+
 ### Màn hình KQHT (08/11/2026)
 
 - `/admin/learning-outcomes` (menu "Kết quả học tập") nối API thật: danh sách, tìm kiếm, lọc
