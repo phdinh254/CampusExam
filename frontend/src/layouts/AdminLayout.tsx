@@ -7,6 +7,7 @@ import { chuCaiDau } from "../features/auth/authUtils";
 
 const navItems: { label: string; to: string; icon: IconName }[] = [
   { label: "Tổng quan", to: "/admin", icon: "dashboard" },
+  { label: "Kết quả học tập", to: "/admin/learning-outcomes", icon: "layers" },
   { label: "Ngân hàng câu hỏi", to: "/admin/questions", icon: "book" },
   { label: "Kỳ thi", to: "/admin/exams", icon: "calendar" },
   { label: "Thí sinh", to: "/admin/candidates", icon: "users" },

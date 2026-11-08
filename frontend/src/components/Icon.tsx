@@ -18,9 +18,11 @@ export type IconName =
   | "lock"
   | "logout"
   | "menu"
+  | "plus"
   | "search"
   | "sparkles"
-  | "users";
+  | "users"
+  | "x";
 
 const paths: Record<IconName, React.ReactNode> = {
   activity: <><path d="M4 12h3l2-7 4 14 2-7h5" /><path d="M4 4v16h16" /></>,
@@ -40,9 +42,11 @@ const paths: Record<IconName, React.ReactNode> = {
   lock: <><rect x="4" y="10" width="16" height="11" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></>,
   logout: <><path d="M10 17l5-5-5-5M15 12H3" /><path d="M13 3h6a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-6" /></>,
   menu: <><path d="M4 6h16M4 12h16M4 18h16" /></>,
+  plus: <path d="M12 5v14M5 12h14" />,
   search: <><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></>,
   sparkles: <><path d="m12 3-1 3.5L7.5 8 11 9.5l1 3.5 1-3.5L16.5 8 13 6.5Z" /><path d="m5 14-.7 2.3L2 17l2.3.7L5 20l.7-2.3L8 17l-2.3-.7Z" /><path d="m19 13-.6 1.9-1.9.6 1.9.6L19 18l.6-1.9 1.9-.6-1.9-.6Z" /></>,
   users: <><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8" /></>,
+  x: <path d="M18 6 6 18M6 6l12 12" />,
 };
 
 type IconProps = SVGProps<SVGSVGElement> & { name: IconName; size?: number };

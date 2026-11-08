@@ -1,6 +1,6 @@
 # Tiến độ CampusExam
 
-Ngày cập nhật gần nhất: 05/11/2026.
+Ngày cập nhật gần nhất: 08/11/2026.
 
 ## Đã hoàn thành
 
@@ -46,7 +46,7 @@ Ngày cập nhật gần nhất: 05/11/2026.
 - Đã ánh xạ `TAINGUYEN_CAUHOI` vào EF Core.
 - Đã triển khai parser Open XML cho bảng IU03: đọc mã, tách câu hỏi và bốn đáp
   án, kiểm tra đáp án đúng, phát hiện mã sai/trùng và bảo toàn marker ảnh.
-- `POST /api/question-imports/preview` nhận multipart `.docx`, giới hạn 20 MB;
+- `POST /api/nhap-cau-hoi/xem-truoc` nhận multipart `.docx`, giới hạn 20 MB;
   trả tổng dòng hợp lệ/lỗi, số ảnh, dữ liệu từng dòng và mã lỗi/cảnh báo.
 - Dòng có `Đánh dấu câu dẫn` bị chặn bằng `UNSUPPORTED_STEM_MARKER` cho tới khi
   có quy tắc nghiệp vụ; ghi chú được cảnh báo và không trả cho thí sinh.
@@ -56,16 +56,20 @@ Ngày cập nhật gần nhất: 05/11/2026.
 
 ### Database
 
-- `database/CampusExamDB.sql` tạo database mới hoàn chỉnh: 21 bảng, khóa chính
+- `database/CampusExamDB.sql` tạo database mới hoàn chỉnh: 22 bảng, khóa chính
   clustered, CHECK cho mọi cột trạng thái (xem `D-TRANGTHAI-01`), `rowversion`
   cho câu hỏi/ma trận/kỳ thi/bài làm, bảng phiên đăng nhập, bản sao hình ảnh
   của đề và seed ba mức độ.
-- Database đã có: chạy `migrations/` theo thứ tự 01 → 02 → 03; các script chạy
+- Database đã có: chạy `migrations/` theo thứ tự 01 → 02 → 03 → 04; các script chạy
   lại được và giữ dữ liệu.
 - Đã kiểm tra trên SQL Server 2019 cục bộ: database tạo mới và database nâng cấp
   từ bản sao `CampusExam` có cấu trúc giống hệt nhau; 28 kịch bản ghi dữ liệu
   hợp lệ/không hợp lệ cho kết quả đúng.
-- Database `CampusExam` phát triển đã chạy đủ 01, 02, 03 (21 bảng).
+- Database `CampusExam` phát triển đã chạy đủ 01 → 04 (22 bảng; migration 04 chạy
+  08/11/2026, giữ tài khoản admin). Máy khác chưa chạy 04 thì đăng nhập lỗi 500.
+- Migration 04 đã kiểm tra trên database tạm: dựng từ baseline cũ rồi chạy 04 cho
+  cấu trúc giống hệt baseline mới (339 cột/ràng buộc/index), giữ dữ liệu, chạy lại
+  được.
 
 ### Tài khoản
 
@@ -89,10 +93,10 @@ Ngày cập nhật gần nhất: 05/11/2026.
 ## Trạng thái kiểm tra
 
 - Build solution thành công, không có cảnh báo hoặc lỗi tại mốc gần nhất.
-- 98/98 kiểm thử backend thành công: 45 unit test và 53 integration test (gồm
+- 111/111 kiểm thử backend thành công: 45 unit test và 66 integration test (gồm
   test HTTP qua `WebApplicationFactory` cho route, mã lỗi, OpenAPI và toàn bộ luồng
   xác thực trên SQL Server tạm).
-- 29/29 kiểm thử frontend (Vitest, `npm test`) cho `httpClient` và xác thực.
+- 30/30 kiểm thử frontend (Vitest, `npm test`) cho `httpClient` và xác thực.
 - Integration test có truy cập database dùng `SqlServerDatabaseFixture`: mỗi lần
   chạy tạo database tạm `CampusExam_Test_*` từ `CampusExamDB.sql` rồi xóa. Máy chủ
   mặc định là SQL Server cục bộ (Windows auth); đổi bằng biến môi trường
@@ -144,9 +148,31 @@ Ngày cập nhật gần nhất: 05/11/2026.
   dotnet user-secrets set "Auth:SigningKey" "<chuỗi ngẫu nhiên tối thiểu 32 ký tự>"
   ```
 
-- `doi-mat-khau` dùng chung hạn mức 10 lần/phút/IP với đăng nhập. Rate limit tính
-  theo IP kết nối: khi triển khai sau reverse proxy cần bật `ForwardedHeaders`, nếu
-  không mọi người dùng sẽ chung một hạn mức.
+- `doi-mat-khau` dùng chung hạn mức với đăng nhập.
+
+### Gia cố sau rà soát (07/11/2026)
+
+- Import DOCX chặn zip bomb: kiểm tra thư mục trung tâm zip trước khi mở (tối đa
+  200 MB sau giải nén, 5.000 thành phần) và `MaxCharactersInPart` 50 triệu ký tự
+  (`GioiHanTepDocx`).
+- Khóa đăng nhập theo cặp tên đăng nhập + IP thay cho theo tài khoản
+  (D-AUTH-KHOA-01); `423` không còn lộ tài khoản có tồn tại; bộ đếm tăng nguyên tử.
+- Sai mật khẩu hiện tại khi đổi mật khẩu dùng chung bộ đếm khóa; frontend hiện giờ
+  hết khóa ở cả trang đổi mật khẩu.
+- `UseForwardedHeaders` với proxy tin cậy cấu hình ở `ReverseProxy:KnownProxies`/
+  `KnownNetworks`; hạn mức đăng nhập mặc định 60/phút/IP (`Auth:LoginPermitsPerMinute`).
+  **Khi triển khai sau reverse proxy phải khai báo IP proxy**, nếu không mọi người
+  dùng chung một hạn mức và một bộ đếm khóa.
+- Cache kết quả kiểm tra mã bảo mật access token 30 giây
+  (`Auth:TokenCheckCacheSeconds`); đổi mật khẩu xóa cache ngay. API khóa tài khoản/
+  cấp lại mật khẩu sau này phải xóa cache tương tự.
+
+### Màn hình KQHT (08/11/2026)
+
+- `/admin/learning-outcomes` (menu "Kết quả học tập") nối API thật: danh sách, tìm kiếm, lọc
+  trạng thái, thẻ tóm tắt; hộp thoại thêm KQHT tự điền ký hiệu theo thứ tự, hiển thị
+  lỗi validation từ server theo từng trường.
+- Chưa có sửa/ngừng dùng vì backend chưa có `PUT`/`PATCH` (bước 3).
 
 ## Bước nhỏ tiếp theo
 

@@ -4,6 +4,7 @@ import AdminDashboard from "../features/admin/AdminDashboard";
 import ExamsPage from "../features/admin/ExamsPage";
 import QuestionBankPage from "../features/admin/QuestionBankPage";
 import StudentsPage from "../features/admin/StudentsPage";
+import LearningOutcomesPage from "../features/learning-outcomes/LearningOutcomesPage";
 import ChangePasswordPage from "../features/auth/ChangePasswordPage";
 import LoginPage from "../features/auth/LoginPage";
 import RequireRole, { TrangChuRedirect } from "../features/auth/RequireRole";
@@ -28,6 +29,7 @@ export const router = createBrowserRouter([
         element: <AdminLayout />,
         children: [
           { index: true, element: <AdminDashboard /> },
+          { path: "learning-outcomes", element: <LearningOutcomesPage /> },
           { path: "questions", element: <QuestionBankPage /> },
           { path: "exams", element: <ExamsPage /> },
           { path: "candidates", element: <StudentsPage /> },

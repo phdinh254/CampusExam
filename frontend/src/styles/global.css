@@ -1,6 +1,7 @@
 @import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap");
 @import "./shells.css";
 @import "./admin-pages.css";
+@import "./learning-outcomes.css";
 @import "./student-exam.css";
 @import "./refinements.css";
 @import "./auth.css";

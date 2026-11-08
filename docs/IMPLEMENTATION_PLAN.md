@@ -1,6 +1,6 @@
 # Kế hoạch hoàn thiện đồ án CampusExam
 
-**Cập nhật:** 05/11/2026 (tuần 1)
+**Cập nhật:** 08/11/2026 (tuần 2)
 **Mô hình ước lượng:** 2 lập trình viên, 12 tuần (02/11/2026 - 24/01/2027); nếu 1
 lập trình viên, dự kiến 18-22 tuần.
 **Ký hiệu:** [x] đã xong · [~] đang làm/làm một phần · [ ] chưa làm.
@@ -25,11 +25,13 @@ dự thi được từ đầu đến cuối:
 
 - Backend .NET 10 bốn lớp `Domain`, `Application`, `Infrastructure`, `Api`;
   `ProblemDetails` và xử lý exception tập trung.
+- Git + GitHub (`phdinh254/CampusExam`).
 - API: `GET /api/muc-do`; `GET /api/kqht`, `GET /api/kqht/{id}`, `POST /api/kqht`
   (ký hiệu phải khớp thứ tự KQHT, trùng ký hiệu trả 409);
-  `POST /api/question-imports/preview` đọc DOCX, tách câu hỏi/phương án/hình và báo
-  lỗi từng dòng.
-- Database hoàn chỉnh 21 bảng (`database/CampusExamDB.sql`) và migration 01-03 đã
+  `POST /api/nhap-cau-hoi/xem-truoc` đọc DOCX (chặn zip bomb), tách câu hỏi/phương
+  án/hình và báo lỗi từng dòng; `/api/xac-thuc/*` đăng nhập, làm mới, đăng xuất,
+  `toi`, đổi mật khẩu.
+- Database hoàn chỉnh 22 bảng (`database/CampusExamDB.sql`) và migration 01-04 đã
   chạy trên database phát triển:
   - khóa chính clustered, CHECK cho mọi cột trạng thái, `rowversion` cho câu hỏi,
     ma trận, kỳ thi, bài làm;
@@ -39,22 +41,23 @@ dự thi được từ đầu đến cuối:
   - bảng phiên đăng nhập (refresh token), bản sao hình ảnh của đề, seed ba mức độ.
 - Lệnh `bootstrap-admin` tạo tài khoản quản trị đầu tiên (mật khẩu nhập lúc chạy,
   băm bằng ASP.NET Core Identity, có ghi nhật ký).
-- 52 test tự động (23 unit, 29 integration; test database chạy trên SQL Server
-  thật) chạy thành công; frontend typecheck và build thành công.
-- Tài liệu: `BUSINESS_RULE_DECISIONS.md`, `PROGRESS.md`.
+- Xác thực JWT + refresh cookie, policy theo vai trò, rate limit, khóa tạm theo tên
+  đăng nhập + IP, OpenAPI ở Development.
+- Frontend: giao diện ba không gian (quản trị, thí sinh, phòng thi), đăng nhập, đổi
+  mật khẩu, route guard; màn hình KQHT nối API thật, các màn hình khác còn dữ liệu mẫu.
+- 141 test tự động (45 unit, 66 integration backend trên SQL Server thật; 30 Vitest
+  frontend) chạy thành công; frontend typecheck và build thành công.
+- Tài liệu: `README.md`, `API_DESIGN.md`, `BUSINESS_RULE_DECISIONS.md`, `PROGRESS.md`.
 
 ### Chưa có hoặc chưa đủ
 
-- **Chưa có Git repository**: đã xảy ra sửa song song cùng file; cần khởi tạo ngay.
-- Chưa có xác thực, phân quyền, OpenAPI, rate limit.
-- EF Core mới ánh xạ 6/21 bảng (`MUCDO`, `KQHOCTAP`, `TAINGUYEN_CAUHOI`,
-  `TAIKHOAN`, `PHIENDANGNHAP`, `NHATKYHD`).
+- EF Core mới ánh xạ 8/22 bảng (`MUCDO`, `KQHOCTAP`, `TAINGUYEN_CAUHOI`,
+  `TAIKHOAN`, `PHIENDANGNHAP`, `NHATKYHD`, `THISINH`, `KHOADANGNHAP`).
 - Import câu hỏi mới có bước preview; chưa lưu file, chưa ghi `LANIMPORT`,
   `CAUHOI`, `TAINGUYEN_CAUHOI`.
 - Chưa có CRUD đầy đủ, sinh đề, kỳ thi, engine làm bài, chấm điểm, báo cáo.
-- Frontend mới là placeholder.
-- Chưa có bảng lịch sử migration, dữ liệu demo, bootstrap tài khoản admin, CI,
-  README.
+- Chưa có quản trị tài khoản (khóa/mở, cấp lại mật khẩu).
+- Chưa có bảng lịch sử migration, dữ liệu demo, CI, formatter/linter.
 
 ## 3. Phạm vi
 
@@ -161,9 +164,9 @@ chỉ thay đổi bằng file mới trong `database/migrations/`; cập nhật �
 ### Giai đoạn 0 - Nền tảng (Tuần 1-2, đến 15/11/2026)
 
 - [x] Solution 4 lớp, `ProblemDetails`, health API.
-- [x] Schema database hoàn chỉnh và migration 01-03.
+- [x] Schema database hoàn chỉnh và migration 01-04.
 - [x] Tài liệu quyết định nghiệp vụ và tiến độ.
-- [ ] Khởi tạo Git, commit trạng thái hiện tại, quy ước nhánh.
+- [~] Git + GitHub (xong); quy ước nhánh chưa chốt.
 - [x] Proxy `/api` trong Vite (dev). CORS allowlist làm khi triển khai frontend và
   API khác origin.
 - [~] OpenAPI (xong: `/openapi/v1.json` ở Development), health check database,
@@ -178,9 +181,10 @@ chỉ thay đổi bằng file mới trong `database/migrations/`; cập nhật �
   còn áp vào endpoint danh sách đầu tiên.
 - [x] Bootstrap admin (`bootstrap-admin`).
 - [ ] Bảng lịch sử migration, dữ liệu demo.
-- [ ] Frontend: design tokens, component cơ bản, trang 403/404/lỗi, loading/empty.
+- [~] Frontend: design tokens, component cơ bản, loading/empty (xong); trang
+  403/404/lỗi chưa có.
 - [ ] Formatter/linter, CI chạy build + test backend/frontend.
-- [ ] README: cài SQL Server, chạy script database, User Secrets, lệnh chạy.
+- [x] README: cài SQL Server, chạy script database, User Secrets, lệnh chạy.
 
 **Nghiệm thu:** máy mới dựng được dự án từ README; script tạo database sạch; CI
 xanh; không có secret trong Git; frontend gọi được API.
@@ -193,7 +197,7 @@ xanh; không có secret trong Git; frontend gọi được API.
   lưu hash ở `PHIENDANGNHAP`, xoay vòng và thu hồi phiên.
 - [~] Đổi `MABAOMAT` khi đổi mật khẩu/khóa tài khoản để vô hiệu phiên cũ (xong đổi
   mật khẩu; khóa tài khoản làm cùng quản trị tài khoản).
-- [x] Khóa tạm sau nhiều lần sai (`SOLANDNSAI`, `KHOADEN`); rate limit đăng nhập;
+- [x] Khóa tạm sau nhiều lần sai theo tên đăng nhập + IP (`KHOADANGNHAP`); rate limit đăng nhập;
   thông báo lỗi không lộ tài khoản có tồn tại.
 - [x] Bắt buộc đổi mật khẩu lần đầu (`PHAIDOIMATKHAU`).
 - [x] Policy `AdminOnly`, `CandidateOnly`; áp cho các API hiện có.
@@ -207,7 +211,7 @@ khoản bị khóa mất quyền; có test cho đăng nhập sai, khóa tạm, t
 
 - [~] KQHT: đã có xem và tạo; còn sửa, ngừng/khôi phục, chặn đổi thứ tự khi đã có
   câu hỏi.
-- [ ] UI KQHT: ký hiệu tự điền theo thứ tự.
+- [~] UI KQHT: danh sách, thêm (ký hiệu tự điền theo thứ tự); còn sửa, ngừng dùng.
 - [ ] CRUD câu hỏi; tìm theo mã/nội dung; lọc theo KQHT/mức độ/trạng thái; phân trang.
 - [ ] Cấp `STT` tiếp theo theo (KQHT, mức độ) trong transaction, xử lý tranh chấp
   unique key; điền `CAUHOI.KYHIEU`.
@@ -316,32 +320,30 @@ liệu; demo end-to-end trên môi trường sạch.
 
 ## 7. Danh mục API
 
-Quy ước: API quản trị đặt dưới `/api/admin/...`; ba API hiện có (`/api/kqht`,
-`/api/muc-do`, `/api/question-imports`) chuyển vào nhóm này khi thêm phân quyền ở
-giai đoạn 1.
+Đường dẫn tiếng Việt không dấu, kebab-case (D-API-01); phân quyền bằng policy, không
+bằng tiền tố đường dẫn. Hợp đồng chi tiết ở `docs/API_DESIGN.md` mục 2.
 
 | Nhóm | API chính | Vai trò | Trạng thái |
 |---|---|---|---|
-| Auth | `/api/auth/login`, `/refresh`, `/logout`, `/me`, `/change-password` | Công khai/đã đăng nhập | [ ] |
-| Tài khoản | `/api/admin/accounts` | Admin | [ ] |
-| Danh mục | `/api/admin/kqht`, `/api/admin/muc-do` | Admin | [~] |
-| Câu hỏi | `/api/admin/questions` | Admin | [ ] |
-| Import câu hỏi | `/api/admin/question-imports/preview`, `/commit` | Admin | [~] |
-| Thí sinh | `/api/admin/candidates`, `/candidate-imports` | Admin | [ ] |
-| Ma trận | `/api/admin/matrices`, `/{id}/coverage`, `/{id}/activate` | Admin | [ ] |
-| Đề | `/api/admin/papers`, `/{id}/variants`, `/{id}/preview` | Admin | [ ] |
-| Kỳ thi | `/api/admin/exams`, `/{id}/assignments`, `/{id}/publish`, `/{id}/dashboard` | Admin | [ ] |
-| Kết quả | `/api/admin/exams/{id}/results`, `/export` | Admin | [ ] |
-| Thi | `/api/student/exams`, `/{id}/start`, `/attempts/{id}`, `/answers`, `/heartbeat`, `/submit` | Thí sinh | [ ] |
-| Xem kết quả | `/api/student/results`, `/attempts/{id}/review` | Thí sinh | [ ] |
-| Nhật ký | `/api/admin/audit-logs` | Admin | [ ] |
+| Xác thực | `/api/xac-thuc/dang-nhap`, `/lam-moi`, `/dang-xuat`, `/toi`, `/doi-mat-khau` | Công khai/đã đăng nhập | [x] |
+| Tài khoản | quản trị tài khoản (đi cùng thí sinh, bước 4) | Admin | [ ] |
+| Danh mục | `/api/kqht`, `/api/muc-do` | Admin | [~] |
+| Câu hỏi | `/api/cau-hoi` | Admin | [ ] |
+| Nhập câu hỏi | `/api/nhap-cau-hoi/xem-truoc`, xác nhận, lịch sử | Admin | [~] |
+| Thí sinh | `/api/thi-sinh` | Admin | [ ] |
+| Ma trận | `/api/ma-tran` | Admin | [ ] |
+| Đề | `/api/de-goc` | Admin | [ ] |
+| Kỳ thi | `/api/ky-thi` (phân công, phát hành, giám sát) | Admin | [ ] |
+| Kết quả, nhật ký | xem `API_DESIGN.md` mục 2.10 | Admin | [ ] |
+| Cổng thí sinh, làm bài | `/api/toi/*`, `/api/toi/ky-thi/{maKT}/bai-lam` | Thí sinh | [ ] |
 
 Mọi API danh sách có phân trang; mọi API ghi có validate, authorize và mã lỗi ổn định.
 
 ## 8. Route frontend
 
 - `/login`, `/change-password`.
-- `/admin/dashboard`, `/admin/kqht`, `/admin/questions`, `/admin/questions/import`.
+- `/admin` (tổng quan), `/admin/learning-outcomes` (KQHT), `/admin/questions`,
+  `/admin/questions/import`.
 - `/admin/candidates`, `/admin/candidates/import`.
 - `/admin/matrices`, `/admin/matrices/:id`, `/admin/papers`, `/admin/papers/:id/preview`.
 - `/admin/exams`, `/admin/exams/:id`, `/assignments`, `/monitor`, `/results`.
@@ -439,7 +441,7 @@ Giao việc theo lát cắt dọc: migration/entity, use case, API, UI, test, t�
 
 | Rủi ro | Mức độ | Giảm thiểu |
 |---|---:|---|
-| Chưa có Git, nhiều người sửa cùng file | Rất cao | Khởi tạo Git ngay; PR; một người sửa file database mỗi lúc |
+| Nhiều người sửa cùng file | Trung bình | Đã có Git; PR; một người sửa file database mỗi lúc |
 | Quy tắc thời gian/trạng thái chưa chốt | Rất cao | Hạn chốt theo bảng mục 4; test trước engine thi |
 | Mất đáp án do mạng/race condition | Rất cao | Upsert idempotent, transaction, `rowversion`, E2E mất mạng |
 | Lộ đáp án qua API/log | Rất cao | DTO riêng cho thí sinh, test serialization, review bảo mật |
@@ -467,16 +469,14 @@ làm song song giai đoạn 0 và 1.
 
 ## 15. Việc tiếp theo (theo thứ tự)
 
-1. Khởi tạo Git — tạm hoãn (quyết định 05/11/2026); trong lúc chưa có Git, tránh
-   hai người sửa cùng một file.
-2. ~~Proxy `/api` trong Vite~~ — xong 05/11/2026.
-3. README tối thiểu: chạy `CampusExamDB.sql` hoặc migrations, User Secrets, lệnh chạy.
-4. ~~Fixture integration test trên SQL Server thật~~ — xong 05/11/2026.
-5. ~~EF mapping `TAIKHOAN`, `PHIENDANGNHAP`, `NHATKYHD`; bootstrap admin~~ — xong
-   05/11/2026.
-6. Auth backend: đăng nhập, refresh, đăng xuất, policy; áp cho API hiện có.
-7. UI đăng nhập + route guard; CI build + test.
-8. Chốt D-CAUDAN-01 và quy tắc chuyển trạng thái câu hỏi trước khi làm CRUD câu hỏi.
+Đã xong đến 08/11/2026: Git, proxy Vite, README, fixture SQL Server, EF mapping tài
+khoản, bootstrap admin, xác thực backend + frontend, gia cố bảo mật, migration 04.
+
+1. CI build + test backend/frontend (GitHub Actions); formatter/linter.
+2. Chốt D-KQHT-01, D-TRANGTHAI-01, quy tắc chuyển trạng thái câu hỏi và D-CAUDAN-01
+   trước khi làm CRUD câu hỏi.
+3. Bước 3 `API_DESIGN.md`: KQHT sửa/ngừng dùng, CRUD câu hỏi, nối màn hình ngân hàng.
+4. Xin bản `.docx` hợp lệ của mẫu IU03 để kiểm thử nhập câu hỏi.
 
 Cuối mỗi tuần đối chiếu tiến độ thực tế với mốc ở mục 14 và điều chỉnh kế hoạch.
 Chưa xong auth thì không bắt đầu engine thi.
