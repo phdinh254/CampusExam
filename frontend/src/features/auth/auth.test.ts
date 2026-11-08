@@ -4,7 +4,14 @@ import { ApiError } from "../../services/httpClient";
 import { authSession } from "../../services/authSession";
 import type { TaiKhoanHienTai } from "../../types/api";
 import { xacThucApi } from "./api";
-import { chuCaiDau, duongDanSauDangNhap, tenGoi, thongBaoLoiDangNhap, trangChuTheoVaiTro } from "./authUtils";
+import {
+  chuCaiDau,
+  duongDanSauDangNhap,
+  tenGoi,
+  thongBaoLoiDangNhap,
+  thongBaoLoiDoiMatKhau,
+  trangChuTheoVaiTro,
+} from "./authUtils";
 
 const admin: TaiKhoanHienTai = { mtk: 1, tenDN: "admin", hoTen: "Nguyễn Thảo", vaiTro: "ADMIN", msts: null, phaiDoiMatKhau: false };
 const thiSinh: TaiKhoanHienTai = { mtk: 2, tenDN: "SV001", hoTen: "Nguyễn Minh Long", vaiTro: "THISINH", msts: "SV001", phaiDoiMatKhau: false };
@@ -55,7 +62,14 @@ describe("thông báo lỗi đăng nhập", () => {
 
   it("hiện giờ hết tạm khóa theo giờ Việt Nam", () => {
     const error = new ApiError(423, "AUTH_ACCOUNT_LOCKED", "x", { khoaDen: "2026-11-06T02:15:00Z" });
-    expect(thongBaoLoiDangNhap(error)).toBe("Tài khoản tạm khóa đến 09:15 do đăng nhập sai nhiều lần.");
+    expect(thongBaoLoiDangNhap(error)).toBe("Tạm khóa trên máy này đến 09:15 do nhập sai mật khẩu nhiều lần.");
+  });
+
+  it("thông báo tạm khóa khi đổi mật khẩu dùng chung với đăng nhập", () => {
+    const error = new ApiError(423, "AUTH_ACCOUNT_LOCKED", "x", { khoaDen: "2026-11-06T02:15:00Z" });
+    expect(thongBaoLoiDoiMatKhau(error)).toBe("Tạm khóa trên máy này đến 09:15 do nhập sai mật khẩu nhiều lần.");
+    expect(thongBaoLoiDoiMatKhau(new ApiError(500, "HTTP_ERROR", "Lỗi máy chủ"))).toBe("Lỗi máy chủ");
+    expect(thongBaoLoiDoiMatKhau("không phải Error")).toBe("Đã có lỗi xảy ra. Vui lòng thử lại.");
   });
 
   it("dùng thông báo của ApiError cho lỗi mạng và rate limit", () => {

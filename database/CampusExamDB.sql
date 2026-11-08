@@ -32,14 +32,25 @@ CREATE TABLE dbo.TAIKHOAN (
     LANDNCUOI       datetime2         NULL,
     NGAYTAO         datetime2         NOT NULL,
     PHAIDOIMATKHAU  bit               NOT NULL CONSTRAINT DF_TAIKHOAN_PHAIDOIMATKHAU DEFAULT (0),
-    SOLANDNSAI      int               NOT NULL CONSTRAINT DF_TAIKHOAN_SOLANDNSAI DEFAULT (0),
-    KHOADEN         datetime2         NULL,     -- tạm khóa đăng nhập đến thời điểm này
     MABAOMAT        uniqueidentifier  NOT NULL CONSTRAINT DF_TAIKHOAN_MABAOMAT DEFAULT (NEWID()), -- đổi khi đổi mật khẩu/khóa để vô hiệu các phiên cũ
     CONSTRAINT PK_TAIKHOAN PRIMARY KEY CLUSTERED (MTK),
     CONSTRAINT AK_AK_TAIKHOAN_TENDN_TAIKHOAN UNIQUE (TENDN),
-    CONSTRAINT CKT_TAIKHOAN CHECK ([VAITRO] IN ('ADMIN','THISINH') AND [TRANGTHAI] IN (0,1)),
-    CONSTRAINT CKT_TAIKHOAN_SOLANDNSAI CHECK (SOLANDNSAI >= 0)
+    CONSTRAINT CKT_TAIKHOAN CHECK ([VAITRO] IN ('ADMIN','THISINH') AND [TRANGTHAI] IN (0,1))
 );
+GO
+
+-- Đếm số lần nhập sai mật khẩu theo cặp tên đăng nhập + IP (D-AUTH-KHOA-01).
+-- Khóa theo TENDN (không FK) để tên không tồn tại cũng bị khóa như tên có thật.
+CREATE TABLE dbo.KHOADANGNHAP (
+    TENDN       varchar(50)  NOT NULL, -- chữ thường, đã cắt khoảng trắng
+    DIACHIIP    varchar(45)  NOT NULL,
+    SOLANSAI    int          NOT NULL,
+    KHOADEN     datetime2    NULL,     -- tạm khóa cặp TENDN + IP đến thời điểm này
+    LANSAICUOI  datetime2    NOT NULL,
+    CONSTRAINT PK_KHOADANGNHAP PRIMARY KEY CLUSTERED (TENDN, DIACHIIP),
+    CONSTRAINT CKT_KHOADANGNHAP CHECK (SOLANSAI >= 0)
+);
+CREATE INDEX IX_KHOADANGNHAP_LANSAICUOI ON dbo.KHOADANGNHAP (LANSAICUOI);
 GO
 
 CREATE TABLE dbo.PHIENDANGNHAP (

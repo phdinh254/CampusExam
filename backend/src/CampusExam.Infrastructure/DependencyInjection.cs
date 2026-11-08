@@ -20,11 +20,12 @@ public static class DependencyInjection
         services.AddScoped<IKqhtCommandService, EfKqhtCommandService>();
         services.AddScoped<IKqhtQuery, EfKqhtQuery>();
         services.AddScoped<IMucDoQuery, EfMucDoQuery>();
-        services.AddSingleton<IQuestionDocxParser, OpenXmlQuestionDocxParser>();
+        services.AddSingleton<IQuestionDocxParser>(new OpenXmlQuestionDocxParser(GioiHanTepDocx.MacDinh));
         services.AddSingleton<IPasswordHasher, AspNetPasswordHasher>();
         services.AddScoped<IInitialAdminService, EfInitialAdminService>();
         services.AddScoped<IAuthService, EfAuthService>();
         services.AddSingleton(TimeProvider.System);
+        services.AddMemoryCache();
 
         return services;
     }

@@ -17,6 +17,7 @@ builder.Services.AddDbContext<CampusExamDbContext>(options =>
     options.UseSqlServer(connectionString));
 builder.Services.AddInfrastructure();
 builder.Services.AddCampusExamAuth(builder.Configuration);
+builder.Services.AddCampusExamReverseProxy(builder.Configuration);
 
 builder.Services.AddControllers()
     .ConfigureApiBehaviorOptions(options =>
@@ -45,6 +46,8 @@ if (BootstrapAdminCli.IsRequested(args))
     return await BootstrapAdminCli.RunAsync(app.Services, app.Configuration);
 }
 
+// Đầu tiên: mọi middleware sau (rate limit, HTTPS redirect, nhật ký) thấy IP và scheme thật.
+app.UseForwardedHeaders();
 app.UseExceptionHandler();
 app.UseStatusCodePages();
 app.UseHttpsRedirection();

@@ -15,7 +15,7 @@ public sealed class SchemaScriptTests(SqlServerDatabaseFixture database)
         await using var connection = new SqlConnection(database.ConnectionString);
         await connection.OpenAsync();
 
-        Assert.Equal(21, await ScalarAsync(connection, "SELECT COUNT(*) FROM sys.tables;"));
+        Assert.Equal(22, await ScalarAsync(connection, "SELECT COUNT(*) FROM sys.tables;"));
         Assert.Equal(0, await ScalarAsync(connection,
             "SELECT COUNT(*) FROM sys.tables t WHERE NOT EXISTS (SELECT 1 FROM sys.indexes i WHERE i.object_id = t.object_id AND i.type = 1);"));
         Assert.Equal(0, await ScalarAsync(connection,

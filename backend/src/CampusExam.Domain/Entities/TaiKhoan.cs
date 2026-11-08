@@ -26,10 +26,6 @@ public class TaiKhoan
 
     public bool PhaiDoiMatKhau { get; set; }
 
-    public int SoLanDNSai { get; set; }
-
-    public DateTime? KhoaDen { get; set; }
-
     /// <summary>Đổi giá trị khi đổi mật khẩu hoặc khóa tài khoản để vô hiệu các phiên cũ.</summary>
     public Guid MaBaoMat { get; set; }
 }

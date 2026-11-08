@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -7,7 +8,9 @@ using CampusExam.Domain.Entities;
 using CampusExam.Infrastructure.Persistence;
 using CampusExam.Infrastructure.Security;
 using CampusExam.IntegrationTests.Database;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
@@ -39,9 +42,17 @@ public sealed class CampusExamApiFactory(
             ["Auth:LoginPermitsPerMinute"] = "10000",
             ["Auth:AllowedOrigins:0"] = AllowedOrigin
         };
+        // Giá trị null: bỏ cấu hình mặc định của test để API dùng giá trị trong appsettings/AuthOptions.
         foreach (var (key, value) in extraSettings ?? new Dictionary<string, string?>())
         {
-            settings[key] = value;
+            if (value is null)
+            {
+                settings.Remove(key);
+            }
+            else
+            {
+                settings[key] = value;
+            }
         }
 
         builder.UseEnvironment("Development");
@@ -52,6 +63,30 @@ public sealed class CampusExamApiFactory(
 
         // Thêm cuối cùng để đè User Secrets của máy phát triển.
         builder.ConfigureAppConfiguration(config => config.AddInMemoryCollection(settings));
+        builder.ConfigureServices(services => services.AddSingleton<IStartupFilter, GiaLapDiaChiIP>());
+    }
+
+    public const string HeaderIP = "X-Test-IP";
+
+    /// <summary>
+    /// TestServer không có IP kết nối; header <see cref="HeaderIP"/> đặt IP cho từng request
+    /// để test khóa đăng nhập theo cặp tài khoản + IP. Chạy trước mọi middleware của API.
+    /// </summary>
+    private sealed class GiaLapDiaChiIP : IStartupFilter
+    {
+        public Action<IApplicationBuilder> Configure(Action<IApplicationBuilder> next) => app =>
+        {
+            app.Use((context, nextMiddleware) =>
+            {
+                if (IPAddress.TryParse(context.Request.Headers[HeaderIP], out var ip))
+                {
+                    context.Connection.RemoteIpAddress = ip;
+                }
+
+                return nextMiddleware(context);
+            });
+            next(app);
+        };
     }
 
     /// <summary>Client HTTPS (cookie Secure), tự quản lý cookie để test kiểm soát rõ ràng.</summary>
@@ -148,10 +183,23 @@ public sealed record PhienTest(HttpResponseMessage Response, JsonDocument Body, 
 
 public static class HttpTestExtensions
 {
-    public static async Task<PhienTest> DangNhapAsync(this HttpClient client, string tenDN, string matKhau, bool ghiNho = false)
+    public static async Task<PhienTest> DangNhapAsync(
+        this HttpClient client,
+        string tenDN,
+        string matKhau,
+        bool ghiNho = false,
+        string? ip = null)
     {
-        var response = await client.PostAsJsonAsync("/api/xac-thuc/dang-nhap", new { tenDN, matKhau, ghiNho });
-        return await DocPhienAsync(response);
+        using var request = new HttpRequestMessage(HttpMethod.Post, "/api/xac-thuc/dang-nhap")
+        {
+            Content = JsonContent.Create(new { tenDN, matKhau, ghiNho })
+        };
+        if (ip is not null)
+        {
+            request.Headers.Add(CampusExamApiFactory.HeaderIP, ip);
+        }
+
+        return await DocPhienAsync(await client.SendAsync(request));
     }
 
     public static async Task<string> LayTokenAdminAsync(this HttpClient client)
@@ -168,9 +216,15 @@ public static class HttpTestExtensions
         string? refreshCookie = null,
         object? body = null,
         bool csrf = false,
-        string? origin = null)
+        string? origin = null,
+        string? ip = null)
     {
         var request = new HttpRequestMessage(method, url);
+        if (ip is not null)
+        {
+            request.Headers.Add(CampusExamApiFactory.HeaderIP, ip);
+        }
+
         if (accessToken is not null)
         {
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);

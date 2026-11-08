@@ -179,8 +179,11 @@ POST /api/xac-thuc/dang-nhap
 ```
 
 - Sai tên đăng nhập hoặc mật khẩu đều trả cùng `401 AUTH_INVALID_CREDENTIALS`.
-- Sai 5 lần liên tiếp ⇒ `KHOADEN = now + 15 phút`, trả `423`.
-- Rate limit 10 lần/phút/IP. Mọi lần đăng nhập ghi `NHATKYHD`.
+- Sai 5 lần liên tiếp từ cùng IP ⇒ khóa cặp tên đăng nhập + IP 15 phút, trả `423`
+  (cả với tên không tồn tại; D-AUTH-KHOA-01). Sai mật khẩu hiện tại khi đổi mật
+  khẩu dùng chung bộ đếm.
+- Rate limit `Auth:LoginPermitsPerMinute` (mặc định 60) lần/phút/IP. Mọi lần đăng
+  nhập ghi `NHATKYHD`.
 - **Request không có trường vai trò.** Backend trả `vaiTro`; frontend tự điều
   hướng `/admin` hoặc `/student` (xem mục 4.3 về nút chọn vai trò).
 
@@ -607,10 +610,13 @@ API; đổi sang tiếng Việt hay không là quyết định riêng của giao
   `ProblemDetails` trong từng controller như `KqhtController` hiện nay.
 - **Xác thực:** `Microsoft.AspNetCore.Authentication.JwtBearer`; khóa ký đặt trong
   User Secrets (`Auth:SigningKey`), không commit. `OnTokenValidated` so `sstamp`
-  với `MABAOMAT` bằng một truy vấn theo khóa chính mỗi request (P0 không cache, để
-  đổi mật khẩu/khóa tài khoản có hiệu lực ngay).
-- **Rate limit:** `AddRateLimiter` — policy `dang-nhap` (10/phút/IP), `tu-dong-luu`
-  (60/phút/bài làm).
+  với `MABAOMAT` bằng truy vấn theo khóa chính, cache `Auth:TokenCheckCacheSeconds`
+  (mặc định 30 giây, 0 = tắt). Đổi mật khẩu xóa cache ngay (D-AUTH-KHOA-01).
+- **Rate limit:** `AddRateLimiter` — policy `dang-nhap` (`Auth:LoginPermitsPerMinute`,
+  mặc định 60/phút/IP), `tu-dong-luu` (60/phút/bài làm).
+- **Reverse proxy:** `UseForwardedHeaders` đứng đầu pipeline; chỉ tin
+  `X-Forwarded-For` từ loopback và proxy khai báo ở `ReverseProxy:KnownProxies`/
+  `KnownNetworks` (một bước).
 - **CORS:** không cần khi dev (proxy cùng origin). Khi triển khai khác origin mới
   bật allowlist, và lúc đó cookie refresh phải đổi `SameSite=None; Secure`.
 - **Kiểm thử hợp đồng:** mỗi controller có integration test khẳng định đường
@@ -674,8 +680,9 @@ Backend:
   điều kiện (hai request cùng token chỉ một thắng). Token đã xoay vòng bị dùng lại
   sau 30 giây ⇒ thu hồi mọi phiên của tài khoản; trong 30 giây (nhiều tab cùng làm
   mới) chỉ trả 401. Thời hạn phiên trượt theo thời hạn ban đầu (12 giờ hoặc 7 ngày).
-- Khóa tạm 15 phút sau 5 lần sai; tên đăng nhập không tồn tại vẫn băm mật khẩu giả
-  để thời gian phản hồi giống sai mật khẩu. Rate limit 10 lần/phút/IP cho đăng nhập.
+- Khóa tạm 15 phút sau 5 lần sai theo cặp tên đăng nhập + IP (bảng `KHOADANGNHAP`,
+  D-AUTH-KHOA-01); tên đăng nhập không tồn tại vẫn băm mật khẩu giả để thời gian
+  phản hồi giống sai mật khẩu. Rate limit 60 lần/phút/IP (cấu hình được).
 - Middleware chặn `403 AUTH_PASSWORD_CHANGE_REQUIRED` khi token có `doi_mk = 1`,
   trừ controller `/api/xac-thuc`. Fallback policy bắt buộc đăng nhập; `AdminOnly`
   áp cho `/api/kqht`, `/api/muc-do`, `/api/nhap-cau-hoi`; `/api/health` và OpenAPI

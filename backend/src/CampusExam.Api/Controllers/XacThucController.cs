@@ -42,11 +42,7 @@ public sealed class XacThucController(
                 return Ok(result.Phien!.ToResponse());
 
             case KetQuaDangNhap.TamKhoa:
-                var locked = ApiProblem.Create(HttpContext, StatusCodes.Status423Locked,
-                    "Tài khoản tạm khóa do đăng nhập sai nhiều lần", ErrorCodes.AuthAccountLocked,
-                    "Vui lòng thử lại sau ít phút.");
-                locked.Extensions["khoaDen"] = result.KhoaDen;
-                return StatusCode(StatusCodes.Status423Locked, locked);
+                return LoiTamKhoa(result.KhoaDen);
 
             case KetQuaDangNhap.BiVoHieuHoa:
                 return StatusCode(StatusCodes.Status403Forbidden, ApiProblem.Create(HttpContext,
@@ -128,6 +124,7 @@ public sealed class XacThucController(
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status429TooManyRequests)]
     [ProducesResponseType<PhienDangNhapResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status423Locked)]
     public async Task<ActionResult<PhienDangNhapResponse>> DoiMatKhau(
         DoiMatKhauRequest request,
         CancellationToken cancellationToken)
@@ -142,6 +139,9 @@ public sealed class XacThucController(
                     new Dictionary<string, string[]> { ["matKhauCu"] = ["Mật khẩu hiện tại không đúng."] },
                     ErrorCodes.AuthCurrentPasswordIncorrect, "Mật khẩu hiện tại không đúng"));
 
+            case KetQuaDoiMatKhau.TamKhoa:
+                return LoiTamKhoa(result.KhoaDen);
+
             case KetQuaDoiMatKhau.MatKhauMoiKhongHopLe:
                 return BadRequest(ApiProblem.Validation(HttpContext,
                     new Dictionary<string, string[]> { ["matKhauMoi"] = [.. result.Loi!] }));
@@ -150,6 +150,15 @@ public sealed class XacThucController(
                 GhiCookie(result.Phien!);
                 return Ok(result.Phien!.ToResponse());
         }
+    }
+
+    private ObjectResult LoiTamKhoa(DateTime? khoaDen)
+    {
+        var locked = ApiProblem.Create(HttpContext, StatusCodes.Status423Locked,
+            "Tài khoản tạm khóa do nhập sai mật khẩu nhiều lần", ErrorCodes.AuthAccountLocked,
+            "Vui lòng thử lại sau ít phút.");
+        locked.Extensions["khoaDen"] = khoaDen;
+        return StatusCode(StatusCodes.Status423Locked, locked);
     }
 
     private int MaTaiKhoan() => int.Parse(User.FindFirst(CampusClaims.MaTaiKhoan)!.Value);

@@ -23,6 +23,8 @@ public sealed class CampusExamDbContext : DbContext
 
     public DbSet<NhatKyHoatDong> NhatKyHoatDongs => Set<NhatKyHoatDong>();
 
+    public DbSet<KhoaDangNhap> KhoaDangNhaps => Set<KhoaDangNhap>();
+
     public DbSet<ThiSinh> ThiSinhs => Set<ThiSinh>();
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)

@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Icon } from "../../components/Icon";
 import { ApiError } from "../../services/httpClient";
 import { useAuth, useTaiKhoan } from "./AuthProvider";
-import { trangChuTheoVaiTro } from "./authUtils";
+import { thongBaoLoiDoiMatKhau, trangChuTheoVaiTro } from "./authUtils";
 
 type LoiTruong = Partial<Record<"matKhauCu" | "matKhauMoi" | "xacNhan", string>>;
 
@@ -42,7 +42,7 @@ export default function ChangePasswordPage() {
           matKhauMoi: error.errors.matKhauMoi?.join(" "),
         });
       } else {
-        setLoiChung(error instanceof Error ? error.message : "Đã có lỗi xảy ra. Vui lòng thử lại.");
+        setLoiChung(thongBaoLoiDoiMatKhau(error));
       }
     } finally {
       setDangGui(false);

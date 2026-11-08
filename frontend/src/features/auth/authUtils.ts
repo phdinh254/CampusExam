@@ -43,18 +43,28 @@ const dinhDangGio = new Intl.DateTimeFormat("vi-VN", {
   timeZone: "Asia/Ho_Chi_Minh",
 });
 
+/** Khóa áp dụng cho cặp tài khoản + IP (D-AUTH-KHOA-01), nên chỉ máy này bị chặn. */
+function thongBaoTamKhoa(error: ApiError): string {
+  const khoaDen = error.problem?.khoaDen ? new Date(error.problem.khoaDen) : null;
+  return khoaDen && !Number.isNaN(khoaDen.getTime())
+    ? `Tạm khóa trên máy này đến ${dinhDangGio.format(khoaDen)} do nhập sai mật khẩu nhiều lần.`
+    : "Tạm khóa trên máy này do nhập sai mật khẩu nhiều lần. Vui lòng thử lại sau.";
+}
+
+/** Lỗi chung (không theo trường) của màn hình đổi mật khẩu. */
+export function thongBaoLoiDoiMatKhau(error: unknown): string {
+  if (error instanceof ApiError && error.code === "AUTH_ACCOUNT_LOCKED") return thongBaoTamKhoa(error);
+  return error instanceof Error ? error.message : "Đã có lỗi xảy ra. Vui lòng thử lại.";
+}
+
 export function thongBaoLoiDangNhap(error: unknown): string {
   if (!(error instanceof ApiError)) return "Đã có lỗi xảy ra. Vui lòng thử lại.";
 
   switch (error.code) {
     case "AUTH_INVALID_CREDENTIALS":
       return "Tên đăng nhập hoặc mật khẩu không đúng.";
-    case "AUTH_ACCOUNT_LOCKED": {
-      const khoaDen = error.problem?.khoaDen ? new Date(error.problem.khoaDen) : null;
-      return khoaDen && !Number.isNaN(khoaDen.getTime())
-        ? `Tài khoản tạm khóa đến ${dinhDangGio.format(khoaDen)} do đăng nhập sai nhiều lần.`
-        : "Tài khoản tạm khóa do đăng nhập sai nhiều lần. Vui lòng thử lại sau.";
-    }
+    case "AUTH_ACCOUNT_LOCKED":
+      return thongBaoTamKhoa(error);
     case "AUTH_ACCOUNT_DISABLED":
       return "Tài khoản đã bị khóa. Vui lòng liên hệ quản trị viên.";
     case "VALIDATION_FAILED":

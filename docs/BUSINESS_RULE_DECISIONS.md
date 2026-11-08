@@ -181,13 +181,56 @@ Ràng buộc kèm theo trong schema:
 Ngày sinh dễ đoán, nên người biết ngày sinh có thể đăng nhập trước và đổi mật khẩu
 của thí sinh. Biện pháp bắt buộc:
 
-- Khóa tạm 15 phút sau 5 lần sai liên tiếp; rate limit đăng nhập theo IP.
+- Khóa tạm 15 phút sau 5 lần sai liên tiếp theo cặp tên đăng nhập + IP
+  (D-AUTH-KHOA-01); rate limit đăng nhập theo IP.
 - Ghi `NHATKYHD` mỗi lần đăng nhập và đổi mật khẩu (kèm IP) để tra cứu khi có
   khiếu nại.
 - Danh sách thí sinh cho admin lọc được "chưa đổi mật khẩu mặc định"
   (`PHAIDOIMATKHAU = 1`) để nhắc thí sinh đổi trước ngày thi.
 - Thí sinh bị chiếm tài khoản: admin cấp lại mật khẩu (về ngày sinh) và xác minh
   danh tính trực tiếp.
+
+## D-AUTH-KHOA-01 — Khóa đăng nhập theo cặp tên đăng nhập + IP
+
+Đã chốt ngày 07/11/2026, thay cho khóa theo tài khoản (`TAIKHOAN.SOLANDNSAI`,
+`TAIKHOAN.KHOADEN`, đã bỏ ở migration 04).
+
+### Lý do
+
+Khóa theo tài khoản cho phép bất kỳ ai khóa tài khoản người khác: nhập sai 5 lần
+mật khẩu của bạn mình ngay trước giờ thi là thí sinh đó không vào được 15 phút. Mã
+`423` khi đó còn tiết lộ tên đăng nhập có tồn tại.
+
+### Quy tắc
+
+- Đếm lần sai trong bảng `KHOADANGNHAP`, khóa chính (`TENDN`, `DIACHIIP`). `TENDN`
+  lưu chữ thường, không có khóa ngoại tới `TAIKHOAN`: tên không tồn tại cũng được
+  đếm và bị khóa y hệt, nên `423` không còn tiết lộ tài khoản có tồn tại.
+- Sai 5 lần liên tiếp từ cùng IP ⇒ khóa cặp đó 15 phút, trả `423 AUTH_ACCOUNT_LOCKED`
+  kèm `khoaDen`; chủ tài khoản ở máy khác vẫn đăng nhập được.
+- Đang khóa thì từ chối cả khi nhập đúng mật khẩu.
+- Lần sai cách lần sai trước quá 15 phút, hoặc sau khi hết khóa, thì đếm lại từ 1.
+  Đăng nhập đúng xóa bộ đếm.
+- Nhập sai **mật khẩu hiện tại** khi đổi mật khẩu dùng chung bộ đếm này (chặn dò
+  mật khẩu bằng access token bị lộ). Đang khóa thì đổi mật khẩu cũng trả `423`.
+- Bộ đếm tăng bằng một câu `MERGE ... WITH (HOLDLOCK)`, nên nhiều request sai đồng
+  thời không làm mất lần đếm. Các cặp không sai thêm trong 1 ngày được dọn tự động.
+- IP lấy sau middleware `ForwardedHeaders`. Khi chạy sau reverse proxy phải khai
+  báo proxy trong `ReverseProxy:KnownProxies`/`KnownNetworks`, nếu không mọi người
+  dùng sẽ chung IP của proxy.
+
+### Rủi ro còn lại
+
+- Kẻ tấn công ngồi chung phòng máy (cùng IP NAT) vẫn khóa được thí sinh khác trong
+  phòng. Biện pháp: giám thị theo dõi, admin xem `NHATKYHD` (hành động
+  `Tạm khóa đăng nhập`).
+- Dò mật khẩu phân tán từ nhiều IP chỉ bị chặn bởi rate limit theo IP và chính sách
+  mật khẩu.
+- Kiểm tra mã bảo mật access token được cache `Auth:TokenCheckCacheSeconds` (mặc
+  định 30 giây). Đổi mật khẩu xóa cache ngay; **API khóa tài khoản/cấp lại mật
+  khẩu sau này cũng phải xóa cache** (khóa `auth:mabaomat:{MTK}`), nếu không token
+  cũ còn dùng được tối đa 30 giây. Khi chạy nhiều instance, thay đổi ở instance
+  khác có hiệu lực chậm tối đa chừng đó.
 
 ## Các quyết định tiếp theo theo IMPLEMENTATION_PLAN
 

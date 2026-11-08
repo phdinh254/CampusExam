@@ -70,13 +70,16 @@ public enum KetQuaDoiMatKhau
 {
     ThanhCong,
     SaiMatKhauCu,
-    MatKhauMoiKhongHopLe
+    MatKhauMoiKhongHopLe,
+    /// <summary>Sai mật khẩu (đăng nhập hoặc đổi mật khẩu) quá nhiều lần từ cùng IP.</summary>
+    TamKhoa
 }
 
 public sealed record DoiMatKhauResult(
     KetQuaDoiMatKhau KetQua,
     PhienDaCap? Phien = null,
-    IReadOnlyList<string>? Loi = null);
+    IReadOnlyList<string>? Loi = null,
+    DateTime? KhoaDen = null);
 
 /// <summary>Thông tin đưa vào access token.</summary>
 public sealed record ThongTinToken(

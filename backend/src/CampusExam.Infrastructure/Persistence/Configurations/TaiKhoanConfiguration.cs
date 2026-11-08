@@ -22,8 +22,6 @@ internal sealed class TaiKhoanConfiguration : IEntityTypeConfiguration<TaiKhoan>
         entity.Property(x => x.LanDNCuoi).HasColumnName("LANDNCUOI");
         entity.Property(x => x.NgayTao).HasColumnName("NGAYTAO");
         entity.Property(x => x.PhaiDoiMatKhau).HasColumnName("PHAIDOIMATKHAU");
-        entity.Property(x => x.SoLanDNSai).HasColumnName("SOLANDNSAI");
-        entity.Property(x => x.KhoaDen).HasColumnName("KHOADEN");
         entity.Property(x => x.MaBaoMat).HasColumnName("MABAOMAT");
     }
 }

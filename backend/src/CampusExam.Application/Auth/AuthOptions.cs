@@ -22,7 +22,18 @@ public sealed class AuthOptions
 
     public int LockoutMinutes { get; set; } = 15;
 
-    public int LoginPermitsPerMinute { get; set; } = 10;
+    /// <summary>
+    /// Số request đăng nhập/đổi mật khẩu mỗi phút cho một IP. Đủ rộng cho phòng máy dùng chung
+    /// IP (NAT) vào đầu giờ thi; dò mật khẩu từng người đã bị chặn bởi khóa theo tên + IP.
+    /// </summary>
+    public int LoginPermitsPerMinute { get; set; } = 60;
+
+    /// <summary>
+    /// Số giây cache kết quả kiểm tra mã bảo mật của access token (tránh truy vấn database mỗi request).
+    /// Đổi mật khẩu trên cùng instance xóa cache ngay; thay đổi từ nơi khác (instance khác, sửa trực tiếp
+    /// database) có hiệu lực chậm tối đa chừng này giây. 0 = tắt cache.
+    /// </summary>
+    public int TokenCheckCacheSeconds { get; set; } = 30;
 
     /// <summary>Origin được phép gọi lam-moi/dang-xuat (chống CSRF), ví dụ http://localhost:5173.</summary>
     public string[] AllowedOrigins { get; set; } = [];

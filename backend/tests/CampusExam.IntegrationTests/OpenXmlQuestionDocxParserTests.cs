@@ -138,6 +138,53 @@ public sealed class OpenXmlQuestionDocxParserTests
         Assert.Contains("Không tìm thấy bảng câu hỏi", exception.Message);
     }
 
+    [Fact]
+    public async Task Preview_rejects_package_exceeding_uncompressed_size_limit()
+    {
+        await using var stream = CreateDocument("A1-001", "A", null, null, includeImage: false);
+        var parser = new OpenXmlQuestionDocxParser(
+            GioiHanTepDocx.MacDinh with { TongDungLuongGiaiNen = 1024 });
+
+        var exception = await Assert.ThrowsAsync<QuestionImportFormatException>(
+            () => parser.PreviewAsync(stream, CancellationToken.None));
+
+        Assert.Contains("dung lượng sau giải nén", exception.Message);
+    }
+
+    [Fact]
+    public async Task Preview_rejects_package_with_too_many_entries()
+    {
+        await using var stream = CreateDocument("A1-001", "A", null, null, includeImage: false);
+        var parser = new OpenXmlQuestionDocxParser(GioiHanTepDocx.MacDinh with { SoMucToiDa = 2 });
+
+        var exception = await Assert.ThrowsAsync<QuestionImportFormatException>(
+            () => parser.PreviewAsync(stream, CancellationToken.None));
+
+        Assert.Contains("quá nhiều thành phần", exception.Message);
+    }
+
+    [Fact]
+    public async Task Preview_rejects_xml_part_exceeding_character_limit()
+    {
+        await using var stream = CreateDocument("A1-001", "A", null, null, includeImage: false);
+        var parser = new OpenXmlQuestionDocxParser(GioiHanTepDocx.MacDinh with { KyTuMoiPhan = 200 });
+
+        var exception = await Assert.ThrowsAsync<QuestionImportFormatException>(
+            () => parser.PreviewAsync(stream, CancellationToken.None));
+
+        Assert.Contains("quá lớn", exception.Message);
+    }
+
+    [Fact]
+    public async Task Preview_rejects_non_zip_content()
+    {
+        await using var stream = new MemoryStream("không phải zip"u8.ToArray());
+        var parser = new OpenXmlQuestionDocxParser();
+
+        await Assert.ThrowsAsync<QuestionImportFormatException>(
+            () => parser.PreviewAsync(stream, CancellationToken.None));
+    }
+
     private static MemoryStream CreateDocument(
         string? code,
         string correctAnswer,

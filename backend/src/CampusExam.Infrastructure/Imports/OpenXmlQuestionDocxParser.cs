@@ -1,7 +1,9 @@
 using System.Globalization;
+using System.IO.Compression;
 using System.IO.Packaging;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Xml;
 using CampusExam.Application.QuestionImports;
 using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
@@ -11,9 +13,14 @@ using W = DocumentFormat.OpenXml.Wordprocessing;
 
 namespace CampusExam.Infrastructure.Imports;
 
-public sealed partial class OpenXmlQuestionDocxParser : IQuestionDocxParser
+public sealed partial class OpenXmlQuestionDocxParser(GioiHanTepDocx gioiHan) : IQuestionDocxParser
 {
     private const string ImagePlaceholderPrefix = "{{image:";
+
+    public OpenXmlQuestionDocxParser()
+        : this(GioiHanTepDocx.MacDinh)
+    {
+    }
 
     public Task<QuestionImportPreview> PreviewAsync(
         Stream docxStream,
@@ -24,13 +31,21 @@ public sealed partial class OpenXmlQuestionDocxParser : IQuestionDocxParser
 
         try
         {
+            KiemTraKichThuocGoi(docxStream);
+
             using var document = WordprocessingDocument.Open(
                 docxStream,
                 isEditable: false,
-                new OpenSettings { AutoSave = false });
+                new OpenSettings { AutoSave = false, MaxCharactersInPart = gioiHan.KyTuMoiPhan });
 
             var preview = Parse(document, cancellationToken);
             return Task.FromResult(preview);
+        }
+        catch (Exception exception) when (LaLoiVuotKyTu(exception))
+        {
+            throw new QuestionImportFormatException(
+                "Tài liệu DOCX có phần nội dung quá lớn, không thể đọc.",
+                exception);
         }
         catch (Exception exception) when (
             exception is OpenXmlPackageException or
@@ -42,6 +57,56 @@ public sealed partial class OpenXmlQuestionDocxParser : IQuestionDocxParser
                 "Tệp không phải tài liệu DOCX hợp lệ hoặc đã bị hỏng.",
                 exception);
         }
+    }
+
+    /// <summary>
+    /// Đọc thư mục trung tâm của zip (không giải nén) để chặn zip bomb trước khi Open XML đọc
+    /// nội dung. .NET không giải nén một mục vượt dung lượng khai báo, nên tổng khai báo là đáng tin.
+    /// </summary>
+    private void KiemTraKichThuocGoi(Stream stream)
+    {
+        if (!stream.CanSeek)
+        {
+            throw new ArgumentException("Luồng DOCX phải hỗ trợ seek.", nameof(stream));
+        }
+
+        var viTriBatDau = stream.Position;
+        using (var zip = new ZipArchive(stream, ZipArchiveMode.Read, leaveOpen: true))
+        {
+            if (zip.Entries.Count > gioiHan.SoMucToiDa)
+            {
+                throw new QuestionImportFormatException(
+                    "Tài liệu DOCX chứa quá nhiều thành phần, không thể đọc.");
+            }
+
+            long tong = 0;
+            foreach (var entry in zip.Entries)
+            {
+                tong += entry.Length;
+                if (tong > gioiHan.TongDungLuongGiaiNen)
+                {
+                    throw new QuestionImportFormatException(
+                        $"Tài liệu DOCX có dung lượng sau giải nén vượt quá " +
+                        $"{gioiHan.TongDungLuongGiaiNen / (1024 * 1024)} MB, không thể đọc.");
+                }
+            }
+        }
+
+        stream.Position = viTriBatDau;
+    }
+
+    /// <summary>Open XML báo vượt MaxCharactersInPart bằng XmlException hoặc bọc trong exception khác.</summary>
+    private static bool LaLoiVuotKyTu(Exception exception)
+    {
+        for (var current = exception; current is not null; current = current.InnerException)
+        {
+            if (current is XmlException)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static QuestionImportPreview Parse(

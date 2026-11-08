@@ -31,8 +31,6 @@ public sealed class AccountMappingTests(SqlServerDatabaseFixture database) : IAs
                 LanDNCuoi = now,
                 NgayTao = now,
                 PhaiDoiMatKhau = true,
-                SoLanDNSai = 2,
-                KhoaDen = now.AddMinutes(15),
                 MaBaoMat = maBaoMat
             };
             write.TaiKhoans.Add(taiKhoan);
@@ -49,12 +47,10 @@ public sealed class AccountMappingTests(SqlServerDatabaseFixture database) : IAs
         Assert.Equal("Quản trị viên", saved.HoTen);
         Assert.Equal(TaiKhoan.TrangThaiHoatDong, saved.TrangThai);
         Assert.True(saved.PhaiDoiMatKhau);
-        Assert.Equal(2, saved.SoLanDNSai);
         Assert.Equal(maBaoMat, saved.MaBaoMat);
         Assert.Equal(now, saved.NgayTao);
         Assert.Equal(DateTimeKind.Utc, saved.NgayTao.Kind);
         Assert.Equal(DateTimeKind.Utc, saved.LanDNCuoi!.Value.Kind);
-        Assert.Equal(DateTimeKind.Utc, saved.KhoaDen!.Value.Kind);
     }
 
     [Fact]

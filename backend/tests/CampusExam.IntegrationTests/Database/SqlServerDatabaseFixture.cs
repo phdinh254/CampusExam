@@ -23,7 +23,7 @@ public sealed partial class SqlServerDatabaseFixture : IAsyncLifetime
         "TRA_LOI", "BAILAM", "PHANCONGTHI", "KYTHI", "HOAN_VI", "DECON",
         "TAINGUYEN_GOMCAU", "GOM_CAU", "DEGOC", "CAU_TRUC", "MATRAN",
         "TAINGUYEN_CAUHOI", "CAUHOI", "KQHOCTAP", "THISINH", "LOINHAPDULIEU",
-        "LANIMPORT", "NHATKYHD", "PHIENDANGNHAP", "TAIKHOAN"
+        "LANIMPORT", "NHATKYHD", "PHIENDANGNHAP", "KHOADANGNHAP", "TAIKHOAN"
     ];
 
     private readonly string _serverConnectionString;

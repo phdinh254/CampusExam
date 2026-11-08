@@ -93,6 +93,57 @@ public sealed class XacThucApiTests(SqlServerDatabaseFixture database) : IAsyncL
     }
 
     [Fact]
+    public async Task Tam_khoa_chi_ap_dung_cho_ip_da_nhap_sai()
+    {
+        for (var lan = 1; lan <= 5; lan++)
+        {
+            await _client.DangNhapAsync("admin", "SaiMatKhau1", ip: "10.0.0.66");
+        }
+
+        var keTanCong = await _client.DangNhapAsync("admin", DuLieuXacThuc.MatKhauAdmin, ip: "10.0.0.66");
+        Assert.Equal((HttpStatusCode)423, keTanCong.Response.StatusCode);
+
+        // Chủ tài khoản ở máy khác vẫn đăng nhập được.
+        var chuTaiKhoan = await _client.DangNhapAsync("admin", DuLieuXacThuc.MatKhauAdmin, ip: "10.0.0.7");
+        Assert.Equal(HttpStatusCode.OK, chuTaiKhoan.Response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Ten_dang_nhap_khong_ton_tai_cung_bi_tam_khoa_nhu_ten_co_that()
+    {
+        PhienTest? lanThuNam = null;
+        for (var lan = 1; lan <= 5; lan++)
+        {
+            lanThuNam = await _client.DangNhapAsync("khongco", "SaiMatKhau1");
+        }
+
+        // 423 không còn tiết lộ tên đăng nhập có tồn tại hay không.
+        Assert.Equal((HttpStatusCode)423, lanThuNam!.Response.StatusCode);
+        Assert.Equal("AUTH_ACCOUNT_LOCKED", lanThuNam.Body.RootElement.GetProperty("code").GetString());
+        Assert.True(lanThuNam.Body.RootElement.GetProperty("khoaDen").GetDateTime() > DateTime.UtcNow.AddMinutes(14));
+    }
+
+    [Fact]
+    public async Task Sai_lau_hon_thoi_gian_khoa_thi_dem_lai_tu_dau()
+    {
+        for (var lan = 1; lan <= 4; lan++)
+        {
+            await _client.DangNhapAsync("admin", "SaiMatKhau1");
+        }
+
+        await using (var connection = new SqlConnection(database.ConnectionString))
+        {
+            await connection.OpenAsync();
+            await using var command = new SqlCommand(
+                "UPDATE dbo.KHOADANGNHAP SET LANSAICUOI = DATEADD(MINUTE, -16, LANSAICUOI);", connection);
+            await command.ExecuteNonQueryAsync();
+        }
+
+        var sai = await _client.DangNhapAsync("admin", "SaiMatKhau1");
+        Assert.Equal(HttpStatusCode.Unauthorized, sai.Response.StatusCode);
+    }
+
+    [Fact]
     public async Task Dang_nhap_dung_dat_lai_so_lan_sai()
     {
         await _client.DangNhapAsync("admin", "SaiMatKhau1");
@@ -100,9 +151,31 @@ public sealed class XacThucApiTests(SqlServerDatabaseFixture database) : IAsyncL
         await _client.DangNhapAsync("admin", DuLieuXacThuc.MatKhauAdmin);
 
         await using var db = database.CreateDbContext();
+        Assert.False(await db.KhoaDangNhaps.AnyAsync());
         var taiKhoan = await db.TaiKhoans.SingleAsync(x => x.TenDN == "admin");
-        Assert.Equal(0, taiKhoan.SoLanDNSai);
         Assert.NotNull(taiKhoan.LanDNCuoi);
+    }
+
+    [Fact]
+    public async Task Sai_mat_khau_cu_khi_doi_mat_khau_dem_chung_voi_dang_nhap()
+    {
+        var token = await _client.LayTokenAdminAsync();
+        HttpResponseMessage? lanThuNam = null;
+        for (var lan = 1; lan <= 5; lan++)
+        {
+            lanThuNam = await _client.GuiAsync(HttpMethod.Post, "/api/xac-thuc/doi-mat-khau", token,
+                body: new { matKhauCu = $"DoMatKhau{lan}", matKhauMoi = "MatKhauMoi1" });
+        }
+
+        Assert.Equal((HttpStatusCode)423, lanThuNam!.StatusCode);
+        Assert.Equal("AUTH_ACCOUNT_LOCKED", await lanThuNam.MaLoiAsync());
+
+        // Đang khóa: nhập đúng mật khẩu cũ cũng bị từ chối, đăng nhập từ IP này cũng vậy.
+        var dungMatKhau = await _client.GuiAsync(HttpMethod.Post, "/api/xac-thuc/doi-mat-khau", token,
+            body: new { matKhauCu = DuLieuXacThuc.MatKhauAdmin, matKhauMoi = "MatKhauMoi1" });
+        Assert.Equal((HttpStatusCode)423, dungMatKhau.StatusCode);
+        var dangNhap = await _client.DangNhapAsync("admin", DuLieuXacThuc.MatKhauAdmin);
+        Assert.Equal((HttpStatusCode)423, dangNhap.Response.StatusCode);
     }
 
     [Fact]
@@ -315,6 +388,104 @@ public sealed class XacThucApiTests(SqlServerDatabaseFixture database) : IAsyncL
         Assert.Equal(HttpStatusCode.TooManyRequests, lanBa.StatusCode);
         Assert.Equal("RATE_LIMITED", await lanBa.MaLoiAsync());
         Assert.True(lanBa.Headers.Contains("Retry-After"));
+    }
+
+    [Fact]
+    public async Task Sau_reverse_proxy_tin_cay_rate_limit_tinh_theo_ip_that_cua_nguoi_dung()
+    {
+        await using var factory = new CampusExamApiFactory(
+            database.ConnectionString,
+            new Dictionary<string, string?>
+            {
+                ["Auth:LoginPermitsPerMinute"] = "2",
+                ["ReverseProxy:KnownProxies:0"] = "10.0.0.1"
+            });
+        using var client = factory.TaoClient();
+
+        Task<HttpResponseMessage> DangNhapQuaProxy(string ipNguoiDung) =>
+            GuiQuaProxyAsync(client, proxy: "10.0.0.1", xForwardedFor: ipNguoiDung);
+
+        await DangNhapQuaProxy("203.0.113.5");
+        await DangNhapQuaProxy("203.0.113.5");
+
+        // Máy khác sau cùng proxy có hạn mức riêng.
+        Assert.Equal(HttpStatusCode.Unauthorized, (await DangNhapQuaProxy("203.0.113.6")).StatusCode);
+        Assert.Equal(HttpStatusCode.TooManyRequests, (await DangNhapQuaProxy("203.0.113.5")).StatusCode);
+    }
+
+    [Fact]
+    public async Task Bo_qua_x_forwarded_for_tu_nguon_khong_tin_cay()
+    {
+        await using var factory = new CampusExamApiFactory(
+            database.ConnectionString,
+            new Dictionary<string, string?>
+            {
+                ["Auth:LoginPermitsPerMinute"] = "2",
+                ["ReverseProxy:KnownProxies:0"] = "10.0.0.1"
+            });
+        using var client = factory.TaoClient();
+
+        // Kẻ tấn công tự đặt X-Forwarded-For khác nhau để né hạn mức: không có tác dụng.
+        await GuiQuaProxyAsync(client, proxy: "198.51.100.9", xForwardedFor: "1.1.1.1");
+        await GuiQuaProxyAsync(client, proxy: "198.51.100.9", xForwardedFor: "2.2.2.2");
+        var lanBa = await GuiQuaProxyAsync(client, proxy: "198.51.100.9", xForwardedFor: "3.3.3.3");
+
+        Assert.Equal(HttpStatusCode.TooManyRequests, lanBa.StatusCode);
+    }
+
+    [Fact]
+    public async Task Han_muc_dang_nhap_mac_dinh_du_cho_phong_may_dung_chung_ip()
+    {
+        await using var factory = new CampusExamApiFactory(
+            database.ConnectionString,
+            new Dictionary<string, string?> { ["Auth:LoginPermitsPerMinute"] = null });
+        using var client = factory.TaoClient();
+
+        for (var lan = 1; lan <= 30; lan++)
+        {
+            var phien = await client.DangNhapAsync($"thisinh{lan}", "SaiMatKhau1", ip: "10.1.1.1");
+            Assert.Equal(HttpStatusCode.Unauthorized, phien.Response.StatusCode);
+        }
+    }
+
+    [Fact]
+    public async Task Kiem_tra_token_dung_cache_ngan_han_va_tat_duoc_bang_cau_hinh()
+    {
+        async Task<(HttpStatusCode TruocKhi, HttpStatusCode SauKhi)> DoiMaBaoMatNgoaiApi(string? giayCache)
+        {
+            await database.ResetAsync();
+            await DuLieuXacThuc.TaoAdminAsync(database);
+            await using var factory = new CampusExamApiFactory(
+                database.ConnectionString,
+                new Dictionary<string, string?> { ["Auth:TokenCheckCacheSeconds"] = giayCache });
+            using var client = factory.TaoClient();
+            var token = await client.LayTokenAdminAsync();
+            var truocKhi = (await client.GuiAsync(HttpMethod.Get, "/api/xac-thuc/toi", token)).StatusCode;
+
+            // Giả lập thay đổi từ nơi khác (instance khác, thao tác trực tiếp database).
+            await using (var connection = new SqlConnection(database.ConnectionString))
+            {
+                await connection.OpenAsync();
+                await using var command = new SqlCommand("UPDATE dbo.TAIKHOAN SET MABAOMAT = NEWID();", connection);
+                await command.ExecuteNonQueryAsync();
+            }
+
+            return (truocKhi, (await client.GuiAsync(HttpMethod.Get, "/api/xac-thuc/toi", token)).StatusCode);
+        }
+
+        Assert.Equal((HttpStatusCode.OK, HttpStatusCode.OK), await DoiMaBaoMatNgoaiApi(null));
+        Assert.Equal((HttpStatusCode.OK, HttpStatusCode.Unauthorized), await DoiMaBaoMatNgoaiApi("0"));
+    }
+
+    private static Task<HttpResponseMessage> GuiQuaProxyAsync(HttpClient client, string proxy, string xForwardedFor)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Post, "/api/xac-thuc/dang-nhap")
+        {
+            Content = JsonContent.Create(new { tenDN = "admin", matKhau = "SaiMatKhau1" })
+        };
+        request.Headers.Add(CampusExamApiFactory.HeaderIP, proxy);
+        request.Headers.Add("X-Forwarded-For", xForwardedFor);
+        return client.SendAsync(request);
     }
 
     [Fact]
