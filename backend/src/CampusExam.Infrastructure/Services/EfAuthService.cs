@@ -247,14 +247,14 @@ public sealed class EfAuthService(
 
         var phien = await CapPhienAsync(taiKhoan, ghiNho, _options.ThoiHanPhien(ghiNho), nguCanh, now, cancellationToken, thiSinh);
         await transaction.CommitAsync(cancellationToken);
-        cache.Remove(KhoaCacheMaBaoMat(mtk)); // token cũ bị từ chối ngay, không chờ hết hạn cache
+        cache.Remove(AuthCacheKeys.MaBaoMat(mtk)); // token cũ bị từ chối ngay, không chờ hết hạn cache
 
         return new DoiMatKhauResult(KetQuaDoiMatKhau.ThanhCong, phien.Phien);
     }
 
     public async Task<bool> AccessTokenConHieuLucAsync(int mtk, Guid maBaoMat, CancellationToken cancellationToken)
     {
-        var khoaCache = KhoaCacheMaBaoMat(mtk);
+        var khoaCache = AuthCacheKeys.MaBaoMat(mtk);
         if (_options.TokenCheckCacheSeconds > 0 && cache.TryGetValue(khoaCache, out Guid? daCache))
         {
             return daCache == maBaoMat;
@@ -273,8 +273,6 @@ public sealed class EfAuthService(
 
         return hienTai == maBaoMat;
     }
-
-    private static string KhoaCacheMaBaoMat(int mtk) => $"auth:mabaomat:{mtk}";
 
     /// <summary>Tạo phiên mới, lưu mọi thay đổi đang chờ trong DbContext và trả token.</summary>
     private async Task<(PhienDaCap Phien, long MaPhien)> CapPhienAsync(

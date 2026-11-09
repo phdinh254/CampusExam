@@ -94,11 +94,11 @@ Ngày cập nhật gần nhất: 09/11/2026.
 
 - Build solution thành công, không có cảnh báo hoặc lỗi tại mốc gần nhất (Debug và
   Release `-warnaserror`); `dotnet format --verify-no-changes` sạch.
-- 136/136 kiểm thử backend thành công: 45 unit test và 91 integration test (gồm
+- 153/153 kiểm thử backend thành công: 45 unit test và 108 integration test (gồm
   test HTTP qua `WebApplicationFactory` cho route, mã lỗi, OpenAPI, toàn bộ luồng
-  xác thực, KQHT và ngân hàng câu hỏi trên SQL Server tạm).
-- 36/36 kiểm thử frontend (Vitest, `npm test`) cho `httpClient`, xác thực và form
-  câu hỏi.
+  xác thực, KQHT, ngân hàng câu hỏi và thí sinh trên SQL Server tạm).
+- 43/43 kiểm thử frontend (Vitest, `npm test`) cho `httpClient`, xác thực, form câu
+  hỏi và form thí sinh; `npm run lint` (Oxlint) không có lỗi.
 - Integration test có truy cập database dùng `SqlServerDatabaseFixture`: mỗi lần
   chạy tạo database tạm `CampusExam_Test_*` từ `CampusExamDB.sql` rồi xóa. Máy chủ
   mặc định là SQL Server cục bộ (Windows auth); đổi bằng biến môi trường
@@ -209,10 +209,21 @@ Ngày cập nhật gần nhất: 09/11/2026.
 - Chưa làm: ảnh trong câu hỏi (cần lưu file, bước 4). Chưa thử giao diện trên trình
   duyệt với backend thật; mới kiểm tra bằng test HTTP, Vitest, typecheck và build.
 
+### Thí sinh và tài khoản thí sinh — bước 4, phần 1 (09/11/2026)
+
+- `/api/thi-sinh`: danh sách (tìm, lọc lớp/trạng thái/chưa đổi mật khẩu, sắp xếp,
+  phân trang), danh sách lớp, chi tiết, thêm (tạo kèm tài khoản theo D-THISINH-01),
+  sửa, khóa/mở khóa, cấp lại mật khẩu, xóa khi chưa được phân công thi.
+- Khóa và cấp lại mật khẩu thu hồi phiên, xóa cache token ngay; mọi thao tác ghi
+  `NHATKYHD` nhóm `THISINH`.
+- Màn quản lý thí sinh bỏ dữ liệu mẫu (email, khóa học giả), nối API thật.
+- Quy tắc xóa thí sinh là đề xuất, chờ xác nhận (xem D-THISINH-01).
+- Chưa thử trên trình duyệt với backend thật.
+
 ## Bước nhỏ tiếp theo
 
-- Bước 4 của `API_DESIGN.md`: lưu file, xác nhận nhập câu hỏi + lịch sử, ảnh câu
-  hỏi; CRUD thí sinh + nhập Excel, quản trị tài khoản.
+- Bước 4 của `API_DESIGN.md` còn lại: nhập thí sinh `.xlsx`; lưu file, xác nhận nhập
+  câu hỏi + lịch sử, ảnh câu hỏi (cần chốt quy tắc mã trùng khi nhập).
 
 - Lưu mẫu IU03 thành `.docx`, chạy qua endpoint preview và đối chiếu kết quả phải
   có 41 dòng/74 ảnh; tất cả 41 dòng hiện phải báo `MISSING_CODE` vì cột mã trống.

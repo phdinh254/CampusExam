@@ -164,6 +164,52 @@ export type ThongKeCauHoi = {
   soKQHT: number;
 };
 
+export type GioiTinh = "nu" | "nam";
+
+export type TrangThaiTaiKhoan = "khoa" | "hoat_dong";
+
+export type ThiSinhTomTat = {
+  msts: string;
+  hoTen: string;
+  /** `YYYY-MM-DD`. */
+  ngaySinh: string;
+  gioiTinh: GioiTinh | null;
+  lop: string | null;
+  trangThaiTaiKhoan: TrangThaiTaiKhoan;
+  /** false khi thí sinh còn dùng mật khẩu mặc định (ngày sinh). */
+  daDoiMatKhau: boolean;
+  soLuotThi: number;
+  ngayTao: string;
+};
+
+export type ThiSinhChiTiet = ThiSinhTomTat & {
+  noiSinh: string | null;
+  cccd: string | null;
+  lanDNCuoi: string | null;
+  /** Số kỳ thi được phân công; lớn hơn 0 thì không xóa được. */
+  soLanPhanCong: number;
+};
+
+export type HoSoThiSinh = {
+  hoTen: string;
+  ngaySinh: string;
+  gioiTinh: GioiTinh | null;
+  lop: string | null;
+  noiSinh: string | null;
+  cccd: string | null;
+};
+
+/** Tạo kèm tài khoản: tên đăng nhập = MSTS, mật khẩu mặc định = ngày sinh ddMMyyyy. */
+export type TaoThiSinhRequest = HoSoThiSinh & { msts: string };
+
+export type TruyVanThiSinh = TruyVanTrang & {
+  lop?: string;
+  trangThai?: TrangThaiTaiKhoan;
+  daDoiMatKhau?: boolean;
+  /** `msts`, `hoTen`, `lop`, `ngayTao`; tiền tố `-` là giảm dần. */
+  sapXep?: string;
+};
+
 export type TaoKqhtRequest = {
   tenKQHT: string;
   thuTu: number;

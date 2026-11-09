@@ -212,6 +212,10 @@ Ràng buộc kèm theo trong schema:
 - Sửa ngày sinh trong hồ sơ **không** tự đổi mật khẩu; ngày sinh mới chỉ có hiệu
   lực ở lần cấp lại tiếp theo.
 - Thí sinh không tự sửa hồ sơ, chỉ đổi được mật khẩu.
+- **Xóa thí sinh** (đề xuất 09/11/2026, chờ xác nhận): chỉ khi chưa được phân công kỳ
+  thi nào; xóa cả tài khoản và phiên đăng nhập, giữ nhật ký cũ nhưng đặt `MTK = NULL`.
+  Đã phân công thì chỉ khóa tài khoản (`409 STUDENT_IN_USE`). Lý do: MSTS không sửa
+  được nên tạo nhầm mã cần có cách xóa.
 
 ### Rủi ro và biện pháp
 

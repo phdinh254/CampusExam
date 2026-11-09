@@ -34,6 +34,11 @@
 .checkbox-field input { margin-top: 2px; accent-color: var(--primary); }
 .form-warning { display: flex; gap: 8px; margin-bottom: 16px; padding: 10px 12px; border: 1px solid #f6dfae; border-radius: 9px; color: #8a5a00; background: #fffaf0; font-size: 12px; line-height: 1.5; }
 
+/* Quản lý thí sinh */
+.toolbar-check { margin: 0; align-items: center; white-space: nowrap; }
+.toolbar-check input { margin-top: 0; }
+.password-hint { display: block; margin-top: 4px; color: #b7791f; font-size: 10px; font-weight: 600; }
+
 @media (max-width: 720px) {
   .answer-grid { grid-template-columns: 1fr; }
   .table-footer { flex-wrap: wrap; gap: 8px; }

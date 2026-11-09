@@ -31,6 +31,10 @@ public sealed class CampusExamDbContext : DbContext
 
     public DbSet<ThiSinh> ThiSinhs => Set<ThiSinh>();
 
+    public DbSet<PhanCongThi> PhanCongThis => Set<PhanCongThi>();
+
+    public DbSet<BaiLam> BaiLams => Set<BaiLam>();
+
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
         // Database lưu UTC; đọc ra gắn Kind = Utc để không bị hiểu nhầm là giờ địa phương.

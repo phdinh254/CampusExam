@@ -30,6 +30,11 @@ public static class ErrorCodes
 
     public const string ConcurrencyConflict = "CONCURRENCY_CONFLICT";
 
+    public const string StudentNotFound = "STUDENT_NOT_FOUND";
+    public const string StudentMstsConflict = "STUDENT_MSTS_CONFLICT";
+    public const string StudentCccdConflict = "STUDENT_CCCD_CONFLICT";
+    public const string StudentInUse = "STUDENT_IN_USE";
+
     public const string QuestionImportEmptyFile = "QUESTION_IMPORT_EMPTY_FILE";
     public const string QuestionImportFileTooLarge = "QUESTION_IMPORT_FILE_TOO_LARGE";
     public const string QuestionImportUnsupportedFileType = "QUESTION_IMPORT_UNSUPPORTED_FILE_TYPE";

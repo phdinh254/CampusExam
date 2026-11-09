@@ -6,6 +6,7 @@ using CampusExam.Application.Interfaces.Security;
 using CampusExam.Application.Kqht;
 using CampusExam.Application.MucDo;
 using CampusExam.Application.QuestionImports;
+using CampusExam.Application.ThiSinh;
 using CampusExam.Infrastructure.Commands;
 using CampusExam.Infrastructure.Imports;
 using CampusExam.Infrastructure.Queries;
@@ -22,6 +23,8 @@ public static class DependencyInjection
         services.AddScoped<IKqhtQuery, EfKqhtQuery>();
         services.AddScoped<ICauHoiQuery, EfCauHoiQuery>();
         services.AddScoped<ICauHoiCommandService, EfCauHoiCommandService>();
+        services.AddScoped<IThiSinhQuery, EfThiSinhQuery>();
+        services.AddScoped<IThiSinhCommandService, EfThiSinhCommandService>();
         services.AddScoped<IMucDoQuery, EfMucDoQuery>();
         services.AddSingleton<IQuestionDocxParser>(new OpenXmlQuestionDocxParser(GioiHanTepDocx.MacDinh));
         services.AddSingleton<IPasswordHasher, AspNetPasswordHasher>();

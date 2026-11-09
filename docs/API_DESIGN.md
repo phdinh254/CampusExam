@@ -327,13 +327,14 @@ Luồng hai bước, file chỉ upload một lần:
 
 | | Method & path | Màn hình |
 |---|---|---|
-| 🆕 | `GET /thi-sinh?tuKhoa&lop&trangThai&trang&kichThuocTrang&sapXep` | Bảng thí sinh |
-| 🆕 | `GET /thi-sinh/lop` | Danh sách lớp cho bộ lọc |
-| 🆕 | `GET /thi-sinh/{msts}` | Chi tiết + lịch sử thi |
-| 🆕 | `POST /thi-sinh` | Thêm thí sinh (tạo kèm `TAIKHOAN`: tên đăng nhập = `msts`, mật khẩu mặc định = ngày sinh `ddMMyyyy`) |
-| 🆕 | `PUT /thi-sinh/{msts}` | Sửa hồ sơ (`msts` không đổi được) |
-| 🆕 | `PATCH /thi-sinh/{msts}/trang-thai-tai-khoan` | Khóa / mở khóa |
-| 🆕 | `POST /thi-sinh/{msts}/cap-lai-mat-khau` | Đặt lại về ngày sinh, bật `PHAIDOIMATKHAU`, thu hồi phiên |
+| ✅ | `GET /thi-sinh?tuKhoa&lop&trangThai&daDoiMatKhau&trang&kichThuocTrang&sapXep` | Bảng thí sinh |
+| ✅ | `GET /thi-sinh/lop` | Danh sách lớp cho bộ lọc |
+| ✅ | `GET /thi-sinh/{msts}` | Chi tiết (`soLuotThi`, `soLanPhanCong`; danh sách lịch sử thi làm cùng kỳ thi) |
+| ✅ | `POST /thi-sinh` | Thêm thí sinh (tạo kèm `TAIKHOAN`: tên đăng nhập = `msts`, mật khẩu mặc định = ngày sinh `ddMMyyyy`) |
+| ✅ | `PUT /thi-sinh/{msts}` | Sửa hồ sơ (`msts` không đổi được) |
+| ✅ | `PATCH /thi-sinh/{msts}/trang-thai-tai-khoan` | Khóa / mở khóa |
+| ✅ | `POST /thi-sinh/{msts}/cap-lai-mat-khau` | Đặt lại về ngày sinh, bật `PHAIDOIMATKHAU`, thu hồi phiên |
+| ✅ | `DELETE /thi-sinh/{msts}` | Xóa hồ sơ + tài khoản khi chưa được phân công thi, ngược lại 409 `STUDENT_IN_USE` |
 | 🆕 | `GET /nhap-thi-sinh/tep-mau` | Tải tệp mẫu `.xlsx` |
 | 🆕 | `POST /nhap-thi-sinh/xem-truoc`, `POST /nhap-thi-sinh/xem-truoc/{maXemTruoc}/xac-nhan`, `GET /nhap-thi-sinh` | Như nhập câu hỏi |
 
@@ -749,3 +750,21 @@ Frontend:
 - `ConfirmDialog` dùng chung; Vitest cho `questionForm`.
 
 Chưa làm: ảnh trong câu hỏi (thêm/sửa/hiển thị) — cần lưu file, làm ở bước 4.
+
+### Bước 4 — đang làm
+
+Xong (09/11/2026) — thí sinh và tài khoản thí sinh:
+
+- `/api/thi-sinh` theo mục 2.6, thêm `DELETE`. Thêm thí sinh tạo `TAIKHOAN` +
+  `THISINH` trong một transaction; MSTS trùng với thí sinh **hoặc** tài khoản bất kỳ
+  (kể cả admin) ⇒ 409 `STUDENT_MSTS_CONFLICT`; CCCD trùng ⇒ 409 `STUDENT_CCCD_CONFLICT`.
+- Khóa tài khoản và cấp lại mật khẩu đổi `MABAOMAT`, thu hồi mọi phiên và xóa cache
+  kiểm tra token (`AuthCacheKeys`) nên access token cũ bị từ chối ngay; ghi `NHATKYHD`
+  nhóm `THISINH` kèm IP. Mở khóa không đổi mật khẩu.
+- Ánh xạ EF tối thiểu `PHANCONGTHI`, `BAILAM` để đếm `soLanPhanCong`/`soLuotThi`.
+- Frontend: màn quản lý thí sinh nối API thật (tìm, lọc lớp/trạng thái/chưa đổi mật
+  khẩu, phân trang, thêm/sửa, khóa/mở, cấp lại mật khẩu, xóa).
+- 17 integration test HTTP (`ThiSinhApiTests`), Vitest cho `studentForm`.
+
+Còn lại: nhập thí sinh `.xlsx`; lưu file + xác nhận nhập câu hỏi + lịch sử; ảnh câu
+hỏi. Xác nhận nhập câu hỏi chờ quyết định xử lý mã trùng (`BUSINESS_RULE_DECISIONS.md`).

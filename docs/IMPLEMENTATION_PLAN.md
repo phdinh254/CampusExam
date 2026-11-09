@@ -46,21 +46,22 @@ dự thi được từ đầu đến cuối:
 - Xác thực JWT + refresh cookie, policy theo vai trò, rate limit, khóa tạm theo tên
   đăng nhập + IP, OpenAPI ở Development.
 - Frontend: giao diện ba không gian (quản trị, thí sinh, phòng thi), đăng nhập, đổi
-  mật khẩu, route guard; màn hình KQHT và ngân hàng câu hỏi nối API thật, các màn
-  hình khác còn dữ liệu mẫu.
-- 172 test tự động (45 unit, 91 integration backend trên SQL Server thật; 36 Vitest
+  mật khẩu, route guard; màn hình KQHT, ngân hàng câu hỏi và thí sinh nối API thật,
+  các màn hình khác còn dữ liệu mẫu.
+- 196 test tự động (45 unit, 108 integration backend trên SQL Server thật; 43 Vitest
   frontend) chạy thành công; frontend typecheck và build thành công.
 - Tài liệu: `README.md`, `API_DESIGN.md`, `BUSINESS_RULE_DECISIONS.md`, `PROGRESS.md`.
 
 ### Chưa có hoặc chưa đủ
 
-- EF Core mới ánh xạ 10/22 bảng (`MUCDO`, `KQHOCTAP`, `CAUHOI`, `GOM_CAU` (chỉ
-  khóa), `TAINGUYEN_CAUHOI`, `TAIKHOAN`, `PHIENDANGNHAP`, `NHATKYHD`, `THISINH`,
-  `KHOADANGNHAP`).
+- EF Core mới ánh xạ 12/22 bảng (`MUCDO`, `KQHOCTAP`, `CAUHOI`, `TAINGUYEN_CAUHOI`,
+  `TAIKHOAN`, `PHIENDANGNHAP`, `NHATKYHD`, `THISINH`, `KHOADANGNHAP`; chỉ khóa:
+  `GOM_CAU`, `PHANCONGTHI`, `BAILAM`).
 - Import câu hỏi mới có bước preview; chưa lưu file, chưa ghi `LANIMPORT`,
   `CAUHOI`, `TAINGUYEN_CAUHOI`.
-- Chưa có CRUD thí sinh, ma trận, sinh đề, kỳ thi, engine làm bài, chấm điểm, báo cáo.
-- Chưa có quản trị tài khoản (khóa/mở, cấp lại mật khẩu).
+- Chưa có nhập thí sinh `.xlsx`, ma trận, sinh đề, kỳ thi, engine làm bài, chấm điểm,
+  báo cáo.
+- Chưa có màn tạo thêm tài khoản quản trị.
 - Chưa có bảng lịch sử migration, dữ liệu demo.
 
 ## 3. Phạm vi
@@ -206,7 +207,8 @@ xanh; không có secret trong Git; frontend gọi được API.
   thông báo lỗi không lộ tài khoản có tồn tại.
 - [x] Bắt buộc đổi mật khẩu lần đầu (`PHAIDOIMATKHAU`).
 - [x] Policy `AdminOnly`, `CandidateOnly`; áp cho các API hiện có.
-- [ ] Quản trị tài khoản: tạo admin, khóa/mở, reset mật khẩu, có audit.
+- [~] Quản trị tài khoản: khóa/mở, cấp lại mật khẩu cho thí sinh (xong, có audit); tạo
+  thêm admin chưa có (hiện dùng `bootstrap-admin`).
 - [x] UI đăng nhập, đổi mật khẩu, route guard, gia hạn phiên.
 
 **Nghiệm thu:** mỗi vai trò chỉ vào đúng route/API; token hết hạn được xử lý; tài
@@ -242,9 +244,10 @@ dùng không xóa được; test authorization và validation đầy đủ.
 
 **Thí sinh**
 
-- [ ] CRUD thí sinh gắn 1-1 tài khoản; khóa thay vì xóa khi đã có lịch sử thi.
+- [x] CRUD thí sinh gắn 1-1 tài khoản; khóa thay vì xóa khi đã được phân công thi
+  (09/11/2026); khóa/mở, cấp lại mật khẩu có nhật ký.
 - [ ] Import `.xlsx` thí sinh: tệp mẫu, preview, ghi theo batch, báo cáo lỗi.
-- [ ] Mật khẩu khởi tạo không ghi log; bắt buộc đổi ở lần đăng nhập đầu.
+- [x] Mật khẩu khởi tạo không ghi log; bắt buộc đổi ở lần đăng nhập đầu.
 
 **Nghiệm thu:** import tệp hợp lệ thành công; tệp lỗi không để lại dữ liệu nửa vời;
 số tổng/thành công/lỗi luôn khớp; file sai loại/quá lớn bị từ chối.
@@ -332,11 +335,11 @@ bằng tiền tố đường dẫn. Hợp đồng chi tiết ở `docs/API_DESIG
 | Nhóm | API chính | Vai trò | Trạng thái |
 |---|---|---|---|
 | Xác thực | `/api/xac-thuc/dang-nhap`, `/lam-moi`, `/dang-xuat`, `/toi`, `/doi-mat-khau` | Công khai/đã đăng nhập | [x] |
-| Tài khoản | quản trị tài khoản (đi cùng thí sinh, bước 4) | Admin | [ ] |
+| Tài khoản | khóa/mở, cấp lại mật khẩu qua `/api/thi-sinh/{msts}/...` | Admin | [~] |
 | Danh mục | `/api/kqht`, `/api/muc-do` | Admin | [x] |
 | Câu hỏi | `/api/cau-hoi` (ảnh câu hỏi làm ở bước 4) | Admin | [~] |
 | Nhập câu hỏi | `/api/nhap-cau-hoi/xem-truoc`, xác nhận, lịch sử | Admin | [~] |
-| Thí sinh | `/api/thi-sinh` | Admin | [ ] |
+| Thí sinh | `/api/thi-sinh` (nhập `.xlsx` chưa có) | Admin | [~] |
 | Ma trận | `/api/ma-tran` | Admin | [ ] |
 | Đề | `/api/de-goc` | Admin | [ ] |
 | Kỳ thi | `/api/ky-thi` (phân công, phát hành, giám sát) | Admin | [ ] |
@@ -485,8 +488,9 @@ KQHT + ngân hàng câu hỏi (bước 3).
    09/11/2026.
 3. ~~Bước 3 `API_DESIGN.md`~~ — xong 09/11/2026.
 4. Xin bản `.docx` hợp lệ của mẫu IU03 để kiểm thử nhập câu hỏi.
-5. Bước 4 `API_DESIGN.md`: lưu file, xác nhận nhập câu hỏi + lịch sử; CRUD thí sinh +
-   nhập Excel; ảnh câu hỏi (`GET /cau-hoi/{maCH}/hinh-anh/{maTN}`).
+5. Bước 4 `API_DESIGN.md`: ~~CRUD thí sinh, khóa/mở, cấp lại mật khẩu~~ (xong
+   09/11/2026); còn nhập thí sinh `.xlsx`, lưu file + xác nhận nhập câu hỏi + lịch sử,
+   ảnh câu hỏi. Xác nhận nhập câu hỏi cần chốt quy tắc mã trùng trước.
 
 Cuối mỗi tuần đối chiếu tiến độ thực tế với mốc ở mục 14 và điều chỉnh kế hoạch.
 Chưa xong auth thì không bắt đầu engine thi.
