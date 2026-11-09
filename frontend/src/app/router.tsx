@@ -10,6 +10,8 @@ import ChangePasswordPage from "../features/auth/ChangePasswordPage";
 import LoginPage from "../features/auth/LoginPage";
 import RequireRole, { TrangChuRedirect } from "../features/auth/RequireRole";
 import ExamTakingPage from "../features/exam/ExamTakingPage";
+import AccountPage from "../features/student/AccountPage";
+import { ExamResultsPage, JoinExamPage } from "../features/student/OnlineExamPages";
 import StudentDashboard from "../features/student/StudentDashboard";
 import AdminLayout from "../layouts/AdminLayout";
 import ExamLayout from "../layouts/ExamLayout";
@@ -49,6 +51,10 @@ export const router = createBrowserRouter([
         element: <StudentLayout />,
         children: [
           { index: true, element: <StudentDashboard /> },
+          { path: "thi", element: <Navigate to="/candidate/thi/tham-gia" replace /> },
+          { path: "thi/tham-gia", element: <JoinExamPage /> },
+          { path: "thi/ket-qua", element: <ExamResultsPage /> },
+          { path: "tai-khoan", element: <AccountPage /> },
           { path: "*", element: <Navigate to="/candidate" replace /> },
         ],
       },

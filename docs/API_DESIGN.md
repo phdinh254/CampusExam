@@ -445,8 +445,14 @@ Giám sát:
 
 ### 2.11 Cổng thí sinh — `/toi`
 
+Menu theo yêu cầu (09/11/2026): **Trang chủ** (`/candidate`) · **Thi trực tuyến** gồm
+*Tham gia thi* (`/candidate/thi/tham-gia`) và *Kết quả thi* (`/candidate/thi/ket-qua`) ·
+**Tài khoản cá nhân** (`/candidate/tai-khoan`). Hai trang Thi trực tuyến hiện là khung,
+có dữ liệu khi làm xong kỳ thi/bài làm (bước 6–7).
+
 | | Method & path | Màn hình |
 |---|---|---|
+| ✅ | `GET /toi/ho-so` | Tài khoản cá nhân: hồ sơ của chính thí sinh (không có trạng thái khóa, số lần phân công) |
 | 🆕 | `GET /toi/tong-quan` | Thẻ "Tổng quan học kỳ" (điểm TB, đã thi, sắp thi) |
 | 🆕 | `GET /toi/ky-thi?phamVi=sap_toi\|da_thi&trang` | "Kỳ thi sắp diễn ra", "Lịch thi" |
 | 🆕 | `GET /toi/ky-thi/{maKT}` | Thẻ kỳ thi tiếp theo, trang chờ vào thi |

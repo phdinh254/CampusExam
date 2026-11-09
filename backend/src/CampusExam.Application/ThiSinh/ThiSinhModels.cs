@@ -144,3 +144,17 @@ public sealed class DoiTrangThaiTaiKhoanRequest
     public TrangThaiTaiKhoan? TrangThai { get; init; }
 }
 
+
+/// <summary>
+/// Hồ sơ thí sinh tự xem (<c>GET /api/toi/ho-so</c>). Không có trạng thái khóa, số lần phân
+/// công hay dữ liệu quản trị khác.
+/// </summary>
+public sealed record HoSoCaNhanDto(
+    string Msts,
+    string HoTen,
+    DateOnly NgaySinh,
+    GioiTinh? GioiTinh,
+    string? Lop,
+    string? NoiSinh,
+    string? Cccd,
+    DateTime NgayTao);

@@ -94,7 +94,7 @@ Ngày cập nhật gần nhất: 09/11/2026.
 
 - Build solution thành công, không có cảnh báo hoặc lỗi tại mốc gần nhất (Debug và
   Release `-warnaserror`); `dotnet format --verify-no-changes` sạch.
-- 165/165 kiểm thử backend thành công: 45 unit test và 120 integration test (gồm
+- 167/167 kiểm thử backend thành công: 45 unit test và 122 integration test (gồm
   test HTTP qua `WebApplicationFactory` cho route, mã lỗi, OpenAPI, toàn bộ luồng
   xác thực, KQHT, ngân hàng câu hỏi, nhập câu hỏi và thí sinh trên SQL Server tạm).
 - 48/48 kiểm thử frontend (Vitest, `npm test`) cho `httpClient`, xác thực, form câu
@@ -226,6 +226,16 @@ Ngày cập nhật gần nhất: 09/11/2026.
 - Frontend: trang nhập câu hỏi (nút "Nhập từ Word" ở ngân hàng câu hỏi), hình hiển thị
   trong form sửa câu hỏi.
 - Chưa chạy với bản `.docx` thật của IU03; chưa thử trên trình duyệt với backend thật.
+
+### Cổng thí sinh (09/11/2026)
+
+- Menu theo yêu cầu: Trang chủ · Thi trực tuyến (Tham gia thi, Kết quả thi) · Tài khoản
+  cá nhân; trên điện thoại menu xuống hàng thứ hai và hiện thẳng hai mục con.
+- Trang chủ bỏ dữ liệu giả (lịch thi, điểm, phòng thi), chỉ còn lời chào, lối tắt và lưu ý.
+- Tài khoản cá nhân: `GET /api/toi/ho-so` (chỉ thí sinh, lấy MSTS từ token), đổi mật
+  khẩu, đăng xuất. Thí sinh không tự sửa hồ sơ.
+- Tham gia thi / Kết quả thi: khung trang, ghi rõ đang phát triển; cần phần kỳ thi.
+- Chưa xem trên trình duyệt với backend thật.
 
 ## Bước nhỏ tiếp theo
 

@@ -190,6 +190,18 @@ export type ThiSinhChiTiet = ThiSinhTomTat & {
   soLanPhanCong: number;
 };
 
+/** `GET /toi/ho-so`: hồ sơ thí sinh tự xem; không có dữ liệu quản trị. */
+export type HoSoCaNhan = {
+  msts: string;
+  hoTen: string;
+  ngaySinh: string;
+  gioiTinh: GioiTinh | null;
+  lop: string | null;
+  noiSinh: string | null;
+  cccd: string | null;
+  ngayTao: string;
+};
+
 export type HoSoThiSinh = {
   hoTen: string;
   ngaySinh: string;

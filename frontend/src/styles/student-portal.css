@@ -1,0 +1,73 @@
+/* Cổng thí sinh: menu Trang chủ · Thi trực tuyến · Tài khoản cá nhân. Import từ StudentLayout. */
+
+.candidate-header { gap: 28px; }
+
+.candidate-nav { align-self: stretch; display: flex; align-items: center; gap: 6px; }
+.candidate-nav > a,
+.candidate-nav-group > button {
+  position: relative; display: flex; align-items: center; gap: 7px; height: 100%; padding: 0 12px;
+  border: 0; color: #5d6779; background: transparent; font: inherit; font-size: 13px; font-weight: 700;
+  white-space: nowrap; cursor: pointer;
+}
+.candidate-nav > a:hover,
+.candidate-nav-group > button:hover { color: var(--primary); }
+.candidate-nav > a.active,
+.candidate-nav-group > button.active { color: var(--primary); }
+.candidate-nav > a.active::after,
+.candidate-nav-group > button.active::after {
+  content: ""; position: absolute; left: 12px; right: 12px; bottom: 0; height: 2px; border-radius: 2px; background: var(--primary);
+}
+.candidate-nav a:focus-visible,
+.candidate-nav button:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
+.candidate-caret { font-size: 10px; }
+.candidate-nav > a.candidate-nav-flat { display: none; }
+
+.candidate-nav-group { position: relative; align-self: stretch; display: flex; }
+.candidate-submenu {
+  position: absolute; top: calc(100% - 4px); left: 0; z-index: 30; display: grid; min-width: 190px; padding: 6px;
+  border: 1px solid #e3e6f0; border-radius: 10px; background: #fff; box-shadow: 0 12px 30px rgba(16,24,40,.12);
+}
+.candidate-submenu a { padding: 9px 12px; border-radius: 7px; color: #344054; font-size: 13px; font-weight: 600; }
+.candidate-submenu a:hover { background: #f5f6fb; color: var(--primary); }
+.candidate-submenu a.active { color: var(--primary); background: #eef0fd; }
+
+/* Trang chủ */
+.candidate-shortcuts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.candidate-shortcut { display: grid; align-content: start; gap: 8px; padding: 20px; color: inherit; text-decoration: none; transition: border-color .15s, transform .15s; }
+.candidate-shortcut:hover { border-color: #c7cbf5; transform: translateY(-1px); }
+.candidate-shortcut strong { font-size: 15px; }
+.candidate-shortcut > span:not(.candidate-shortcut-icon) { color: #667085; font-size: 12px; line-height: 1.55; }
+.candidate-shortcut em { display: inline-flex; align-items: center; gap: 4px; margin-top: 4px; color: var(--primary); font-size: 12px; font-style: normal; font-weight: 700; }
+.candidate-shortcut-icon { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 11px; color: var(--primary); background: #eef0fd; }
+
+/* Thi trực tuyến */
+.candidate-pending { display: grid; justify-items: center; gap: 8px; padding: 56px 20px; color: #667085; text-align: center; }
+.candidate-pending strong { color: #344054; }
+.candidate-pending span { max-width: 460px; font-size: 13px; line-height: 1.6; }
+
+/* Tài khoản cá nhân */
+.candidate-account-grid { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(260px, .8fr); gap: 18px; align-items: start; }
+.candidate-account-side { display: grid; gap: 18px; }
+.candidate-profile-list { display: grid; margin: 0; padding: 4px 20px 8px; }
+.candidate-profile-list > div { display: grid; grid-template-columns: 150px 1fr; gap: 12px; padding: 12px 0; border-top: 1px solid #eef0f4; }
+.candidate-profile-list > div:first-child { border-top: 0; }
+.candidate-profile-list dt { color: #667085; font-size: 12px; }
+.candidate-profile-list dd { margin: 0; font-size: 13px; font-weight: 600; }
+.candidate-profile-note { display: flex; align-items: center; gap: 6px; margin: 0; padding: 12px 20px 16px; color: #8b94a5; font-size: 11px; }
+.candidate-security-card { display: grid; justify-items: start; gap: 8px; padding: 20px; }
+.candidate-security-card h3 { margin: 4px 0 0; font-size: 15px; }
+.candidate-security-card p { margin: 0 0 6px; color: #667085; font-size: 12px; line-height: 1.55; }
+
+@media (max-width: 900px) {
+  .candidate-shortcuts, .candidate-account-grid { grid-template-columns: 1fr; }
+}
+
+/* Điện thoại: menu xuống hàng thứ hai, cuộn ngang nếu thiếu chỗ. */
+@media (max-width: 720px) {
+  .candidate-header { flex-wrap: wrap; gap: 0; padding-bottom: 0; }
+  .candidate-nav { order: 3; width: 100%; height: 46px; margin: 4px -20px 0; padding: 0 8px; overflow-x: auto; border-top: 1px solid #eef0f4; }
+  .candidate-nav > a { font-size: 12px; padding: 0 10px; }
+  .candidate-nav-group { display: none; }
+  .candidate-nav > a.candidate-nav-flat { display: flex; }
+  .candidate-profile-list > div { grid-template-columns: 1fr; gap: 2px; }
+}

@@ -314,6 +314,44 @@ public sealed class ThiSinhApiTests(SqlServerDatabaseFixture database) : IAsyncL
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
 
+    [Fact]
+    public async Task Candidate_reads_own_profile_from_token_without_admin_fields()
+    {
+        await TaoAsync("SV100", hoTen: "Nguyễn Văn An", ngaySinh: "2005-03-14", lop: "K29", cccd: "012345678901");
+        await TaoAsync("SV200", hoTen: "Người khác");
+        var phien = await _client.DangNhapAsync("SV100", "14032005");
+        var doi = await HttpTestExtensions.DocPhienAsync(await _client.GuiAsync(HttpMethod.Post,
+            "/api/xac-thuc/doi-mat-khau", phien.AccessToken,
+            body: new { matKhauCu = "14032005", matKhauMoi = "MatKhauMoi2026" }));
+
+        var response = await _client.GuiAsync(HttpMethod.Get, "/api/toi/ho-so", doi.AccessToken);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        using var body = await DocAsync(response);
+        var root = body.RootElement;
+        Assert.Equal("SV100", root.GetProperty("msts").GetString());
+        Assert.Equal("Nguyễn Văn An", root.GetProperty("hoTen").GetString());
+        Assert.Equal("2005-03-14", root.GetProperty("ngaySinh").GetString());
+        Assert.Equal("K29", root.GetProperty("lop").GetString());
+        Assert.Equal("012345678901", root.GetProperty("cccd").GetString());
+        Assert.False(root.TryGetProperty("trangThaiTaiKhoan", out _));
+        Assert.False(root.TryGetProperty("soLanPhanCong", out _));
+    }
+
+    [Fact]
+    public async Task Admin_and_candidate_who_must_change_password_cannot_read_profile()
+    {
+        await TaoAsync("SV100", ngaySinh: "2005-03-14");
+        var phaiDoi = await _client.DangNhapAsync("SV100", "14032005");
+
+        var admin = await _client.GuiAsync(HttpMethod.Get, "/api/toi/ho-so", _token);
+        var chuaDoi = await _client.GuiAsync(HttpMethod.Get, "/api/toi/ho-so", phaiDoi.AccessToken);
+
+        Assert.Equal(HttpStatusCode.Forbidden, admin.StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, chuaDoi.StatusCode);
+        Assert.Equal("AUTH_PASSWORD_CHANGE_REQUIRED", await chuaDoi.MaLoiAsync());
+    }
+
     // ---------- Hỗ trợ ----------
 
     private Task<HttpResponseMessage> TaoAsync(
