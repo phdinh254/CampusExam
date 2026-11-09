@@ -1,6 +1,6 @@
 # Tiến độ CampusExam
 
-Ngày cập nhật gần nhất: 08/11/2026.
+Ngày cập nhật gần nhất: 09/11/2026.
 
 ## Đã hoàn thành
 
@@ -92,11 +92,13 @@ Ngày cập nhật gần nhất: 08/11/2026.
 
 ## Trạng thái kiểm tra
 
-- Build solution thành công, không có cảnh báo hoặc lỗi tại mốc gần nhất.
-- 111/111 kiểm thử backend thành công: 45 unit test và 66 integration test (gồm
-  test HTTP qua `WebApplicationFactory` cho route, mã lỗi, OpenAPI và toàn bộ luồng
-  xác thực trên SQL Server tạm).
-- 30/30 kiểm thử frontend (Vitest, `npm test`) cho `httpClient` và xác thực.
+- Build solution thành công, không có cảnh báo hoặc lỗi tại mốc gần nhất (Debug và
+  Release `-warnaserror`); `dotnet format --verify-no-changes` sạch.
+- 136/136 kiểm thử backend thành công: 45 unit test và 91 integration test (gồm
+  test HTTP qua `WebApplicationFactory` cho route, mã lỗi, OpenAPI, toàn bộ luồng
+  xác thực, KQHT và ngân hàng câu hỏi trên SQL Server tạm).
+- 36/36 kiểm thử frontend (Vitest, `npm test`) cho `httpClient`, xác thực và form
+  câu hỏi.
 - Integration test có truy cập database dùng `SqlServerDatabaseFixture`: mỗi lần
   chạy tạo database tạm `CampusExam_Test_*` từ `CampusExamDB.sql` rồi xóa. Máy chủ
   mặc định là SQL Server cục bộ (Windows auth); đổi bằng biến môi trường
@@ -173,19 +175,41 @@ Ngày cập nhật gần nhất: 08/11/2026.
   build Release `-warnaserror`, unit + integration test trên container SQL Server 2022)
   và job frontend (`npm ci`, typecheck, Vitest, build).
 - Đã chạy thử cục bộ từng bước (format sạch, build Release 0 cảnh báo, `npm ci` trên
-  bản sao sạch); chưa có lần chạy trên GitHub vì chưa push.
+  bản sao sạch). Lần chạy đầu trên GitHub xanh ở commit `f4a164f`.
 
 ### Màn hình KQHT (08/11/2026)
 
 - `/admin/learning-outcomes` (menu "Kết quả học tập") nối API thật: danh sách, tìm kiếm, lọc
   trạng thái, thẻ tóm tắt; hộp thoại thêm KQHT tự điền ký hiệu theo thứ tự, hiển thị
   lỗi validation từ server theo từng trường.
-- Chưa có sửa/ngừng dùng vì backend chưa có `PUT`/`PATCH` (bước 3).
+- 09/11/2026: thêm sửa, ngừng dùng/khôi phục, xóa (xem mục bước 3 bên dưới).
+
+### Quyết định nghiệp vụ (09/11/2026)
+
+- Người phụ trách chốt D-KQHT-01 (phương án A, hai trạng thái), D-TRANGTHAI-01 (giữ
+  bảng giá trị hiện có), D-CAUHOI-TT-01 (chuyển trạng thái câu hỏi tự do, xóa cứng chỉ
+  khi chưa nằm trong đề) và D-CAUDAN-01 (giữ chặn ở P0). Chi tiết ở
+  `BUSINESS_RULE_DECISIONS.md`.
+
+### KQHT và ngân hàng câu hỏi — bước 3 (09/11/2026)
+
+- KQHT: `PUT`, `PATCH /trang-thai`, `DELETE`; danh sách có `soCauHoi`. Đã có câu
+  hỏi thì không đổi thứ tự, không xóa (`409 KQHT_IN_USE`); KQHT ngừng dùng không
+  nhận câu mới (`409 KQHT_INACTIVE`).
+- `/api/cau-hoi`: danh sách phân trang + tìm/lọc/sắp xếp, thống kê, chi tiết, thêm
+  (cấp `STT` tự động, an toàn khi ghi đồng thời), sửa có `rowversion`, đổi trạng thái,
+  xóa khi chưa nằm trong đề (`409 QUESTION_IN_USE`).
+- Ánh xạ EF thêm `CAUHOI` và `GOM_CAU` (chỉ khóa). Không cần migration mới.
+- Frontend: màn KQHT có sửa/ngừng dùng/xóa; màn ngân hàng câu hỏi bỏ dữ liệu mẫu,
+  nối API thật (thống kê, lọc, phân trang, form thêm/sửa, ngừng dùng, xóa).
+- Chưa làm: ảnh trong câu hỏi (cần lưu file, bước 4). Chưa thử giao diện trên trình
+  duyệt với backend thật; mới kiểm tra bằng test HTTP, Vitest, typecheck và build.
 
 ## Bước nhỏ tiếp theo
 
-- Bước 3 của `API_DESIGN.md`: KQHT sửa/ngừng dùng, CRUD và danh sách câu hỏi có
-  phân trang, thống kê; nối màn hình ngân hàng câu hỏi.
+- ESLint cho frontend (bổ sung vào CI).
+- Bước 4 của `API_DESIGN.md`: lưu file, xác nhận nhập câu hỏi + lịch sử, ảnh câu
+  hỏi; CRUD thí sinh + nhập Excel, quản trị tài khoản.
 
 - Lưu mẫu IU03 thành `.docx`, chạy qua endpoint preview và đối chiếu kết quả phải
   có 41 dòng/74 ảnh; tất cả 41 dòng hiện phải báo `MISSING_CODE` vì cột mã trống.

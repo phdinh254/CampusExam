@@ -15,6 +15,10 @@ public sealed class CampusExamDbContext : DbContext
 
     public DbSet<KqHocTap> KqHocTaps => Set<KqHocTap>();
 
+    public DbSet<CauHoi> CauHois => Set<CauHoi>();
+
+    public DbSet<GomCau> GomCaus => Set<GomCau>();
+
     public DbSet<TaiNguyenCauHoi> TaiNguyenCauHois => Set<TaiNguyenCauHoi>();
 
     public DbSet<TaiKhoan> TaiKhoans => Set<TaiKhoan>();

@@ -27,7 +27,9 @@ dự thi được từ đầu đến cuối:
   `ProblemDetails` và xử lý exception tập trung.
 - Git + GitHub (`phdinh254/CampusExam`).
 - API: `GET /api/muc-do`; `GET /api/kqht`, `GET /api/kqht/{id}`, `POST /api/kqht`
-  (ký hiệu phải khớp thứ tự KQHT, trùng ký hiệu trả 409);
+  (ký hiệu phải khớp thứ tự KQHT, trùng ký hiệu trả 409), `PUT`/`PATCH trang-thai`/
+  `DELETE /api/kqht/{id}`; `/api/cau-hoi` danh sách phân trang, thống kê, chi tiết,
+  thêm, sửa (`rowversion`), đổi trạng thái, xóa khi chưa nằm trong đề;
   `POST /api/nhap-cau-hoi/xem-truoc` đọc DOCX (chặn zip bomb), tách câu hỏi/phương
   án/hình và báo lỗi từng dòng; `/api/xac-thuc/*` đăng nhập, làm mới, đăng xuất,
   `toi`, đổi mật khẩu.
@@ -44,20 +46,22 @@ dự thi được từ đầu đến cuối:
 - Xác thực JWT + refresh cookie, policy theo vai trò, rate limit, khóa tạm theo tên
   đăng nhập + IP, OpenAPI ở Development.
 - Frontend: giao diện ba không gian (quản trị, thí sinh, phòng thi), đăng nhập, đổi
-  mật khẩu, route guard; màn hình KQHT nối API thật, các màn hình khác còn dữ liệu mẫu.
-- 141 test tự động (45 unit, 66 integration backend trên SQL Server thật; 30 Vitest
+  mật khẩu, route guard; màn hình KQHT và ngân hàng câu hỏi nối API thật, các màn
+  hình khác còn dữ liệu mẫu.
+- 172 test tự động (45 unit, 91 integration backend trên SQL Server thật; 36 Vitest
   frontend) chạy thành công; frontend typecheck và build thành công.
 - Tài liệu: `README.md`, `API_DESIGN.md`, `BUSINESS_RULE_DECISIONS.md`, `PROGRESS.md`.
 
 ### Chưa có hoặc chưa đủ
 
-- EF Core mới ánh xạ 8/22 bảng (`MUCDO`, `KQHOCTAP`, `TAINGUYEN_CAUHOI`,
-  `TAIKHOAN`, `PHIENDANGNHAP`, `NHATKYHD`, `THISINH`, `KHOADANGNHAP`).
+- EF Core mới ánh xạ 10/22 bảng (`MUCDO`, `KQHOCTAP`, `CAUHOI`, `GOM_CAU` (chỉ
+  khóa), `TAINGUYEN_CAUHOI`, `TAIKHOAN`, `PHIENDANGNHAP`, `NHATKYHD`, `THISINH`,
+  `KHOADANGNHAP`).
 - Import câu hỏi mới có bước preview; chưa lưu file, chưa ghi `LANIMPORT`,
   `CAUHOI`, `TAINGUYEN_CAUHOI`.
-- Chưa có CRUD đầy đủ, sinh đề, kỳ thi, engine làm bài, chấm điểm, báo cáo.
+- Chưa có CRUD thí sinh, ma trận, sinh đề, kỳ thi, engine làm bài, chấm điểm, báo cáo.
 - Chưa có quản trị tài khoản (khóa/mở, cấp lại mật khẩu).
-- Chưa có bảng lịch sử migration, dữ liệu demo, CI, formatter/linter.
+- Chưa có bảng lịch sử migration, dữ liệu demo, linter frontend (ESLint).
 
 ## 3. Phạm vi
 
@@ -95,19 +99,19 @@ Chi tiết ở `docs/BUSINESS_RULE_DECISIONS.md`.
 | D-GHICHU-01 | Ghi chú chỉ hiển thị khi preview/import, không lưu vào đề |
 | Schema | Đề lưu bản sao câu hỏi và hình (`GOM_CAU`, `TAINGUYEN_GOMCAU`); câu hỏi đã dùng chỉ ngừng sử dụng, không xóa cứng |
 | Schema | Mỗi đề gốc gắn cho một kỳ thi; không đổi đề sau khi đã phân công |
+| D-KQHT-01 (09/11/2026) | Hai trạng thái 0/1; chuyển tự do; chỉ xóa cứng KQHT chưa có câu hỏi/ma trận |
+| D-TRANGTHAI-01 (09/11/2026) | Giữ bảng giá trị trạng thái đang có trong schema |
+| D-CAUHOI-TT-01 (09/11/2026) | Câu hỏi chuyển trạng thái tự do; xóa cứng chỉ khi chưa nằm trong đề; KQHT ngừng dùng không nhận câu mới |
+| D-CAUDAN-01 (09/11/2026) | P0 giữ chặn dòng có "Đánh dấu câu dẫn" (`UNSUPPORTED_STEM_MARKER`) |
 
 ### Đề xuất, chờ người hướng dẫn xác nhận
 
-- D-TRANGTHAI-01: giá trị trạng thái KQHT, câu hỏi, kỳ thi, cách phân đề, giới
-  tính (đã áp dụng CHECK; đổi bằng migration mới).
 - Làm tròn điểm: `số câu đúng / tổng số câu * 10`, làm tròn 2 chữ số.
 
 ### Còn mở - phải chốt trước giai đoạn tương ứng
 
 | Quyết định | Hạn chốt | Chặn giai đoạn |
 |---|---|---|
-| Chuyển trạng thái hợp lệ của câu hỏi, KQHT | Tuần 2 | 2 |
-| D-CAUDAN-01: xử lý cột "Đánh dấu câu dẫn" | Tuần 2 | 3 (import câu hỏi) |
 | Quy tắc trùng mã/tài khoản khi import, import từng phần | Tuần 3 | 3 |
 | Chuyển trạng thái kỳ thi; hủy kỳ thi | Tuần 5 | 6 |
 | Thí sinh vào muộn: đủ thời lượng hay kết thúc theo giờ chung | Tuần 6 | 7 |
@@ -210,14 +214,15 @@ khoản bị khóa mất quyền; có test cho đăng nhập sai, khóa tạm, t
 
 ### Giai đoạn 2 - KQHT và ngân hàng câu hỏi (Tuần 3, đến 22/11/2026)
 
-- [~] KQHT: đã có xem và tạo; còn sửa, ngừng/khôi phục, chặn đổi thứ tự khi đã có
-  câu hỏi.
-- [~] UI KQHT: danh sách, thêm (ký hiệu tự điền theo thứ tự); còn sửa, ngừng dùng.
-- [ ] CRUD câu hỏi; tìm theo mã/nội dung; lọc theo KQHT/mức độ/trạng thái; phân trang.
-- [ ] Cấp `STT` tiếp theo theo (KQHT, mức độ) trong transaction, xử lý tranh chấp
-  unique key; điền `CAUHOI.KYHIEU`.
-- [ ] Sửa câu hỏi dùng `rowversion` chống ghi đè.
-- [ ] UI danh sách, form tạo/sửa có hình, xem chi tiết, ngừng sử dụng.
+- [x] KQHT: xem, tạo, sửa, ngừng/khôi phục, xóa khi chưa dùng; chặn đổi thứ tự khi
+  đã có câu hỏi (09/11/2026).
+- [x] UI KQHT: danh sách, thêm, sửa, ngừng dùng/khôi phục, xóa.
+- [x] CRUD câu hỏi; tìm theo mã/nội dung; lọc theo KQHT/mức độ/trạng thái; phân trang.
+- [x] Cấp `STT` tiếp theo theo (KQHT, mức độ) trong transaction serializable
+  (`UPDLOCK, HOLDLOCK`), thử lại khi trùng unique key; điền `CAUHOI.KYHIEU`.
+- [x] Sửa câu hỏi dùng `rowversion` chống ghi đè.
+- [~] UI danh sách, form tạo/sửa, ngừng sử dụng, xóa (xong); hình ảnh trong câu hỏi
+  làm cùng lưu file ở giai đoạn 3.
 - [ ] Không trả `DAPANDUNG` cho bất kỳ API phía thí sinh.
 
 **Nghiệm thu:** tạo/sửa/tìm câu hỏi end-to-end; không tạo được mã trùng; câu đã
@@ -328,8 +333,8 @@ bằng tiền tố đường dẫn. Hợp đồng chi tiết ở `docs/API_DESIG
 |---|---|---|---|
 | Xác thực | `/api/xac-thuc/dang-nhap`, `/lam-moi`, `/dang-xuat`, `/toi`, `/doi-mat-khau` | Công khai/đã đăng nhập | [x] |
 | Tài khoản | quản trị tài khoản (đi cùng thí sinh, bước 4) | Admin | [ ] |
-| Danh mục | `/api/kqht`, `/api/muc-do` | Admin | [~] |
-| Câu hỏi | `/api/cau-hoi` | Admin | [ ] |
+| Danh mục | `/api/kqht`, `/api/muc-do` | Admin | [x] |
+| Câu hỏi | `/api/cau-hoi` (ảnh câu hỏi làm ở bước 4) | Admin | [~] |
 | Nhập câu hỏi | `/api/nhap-cau-hoi/xem-truoc`, xác nhận, lịch sử | Admin | [~] |
 | Thí sinh | `/api/thi-sinh` | Admin | [ ] |
 | Ma trận | `/api/ma-tran` | Admin | [ ] |
@@ -470,15 +475,18 @@ làm song song giai đoạn 0 và 1.
 
 ## 15. Việc tiếp theo (theo thứ tự)
 
-Đã xong đến 08/11/2026: Git, proxy Vite, README, fixture SQL Server, EF mapping tài
-khoản, bootstrap admin, xác thực backend + frontend, gia cố bảo mật, migration 04.
+Đã xong đến 09/11/2026: Git, proxy Vite, README, fixture SQL Server, EF mapping tài
+khoản, bootstrap admin, xác thực backend + frontend, gia cố bảo mật, migration 04, CI,
+KQHT + ngân hàng câu hỏi (bước 3).
 
-1. ~~CI GitHub Actions~~ — xong 08/11/2026 (cần lần chạy xanh đầu tiên sau khi push);
-   còn ESLint cho frontend.
-2. Chốt D-KQHT-01, D-TRANGTHAI-01, quy tắc chuyển trạng thái câu hỏi và D-CAUDAN-01
-   trước khi làm CRUD câu hỏi.
-3. Bước 3 `API_DESIGN.md`: KQHT sửa/ngừng dùng, CRUD câu hỏi, nối màn hình ngân hàng.
+1. ~~CI GitHub Actions~~ — xong 08/11/2026, lần chạy đầu trên GitHub xanh ở commit
+   `f4a164f`; còn ESLint cho frontend.
+2. ~~Chốt D-KQHT-01, D-TRANGTHAI-01, chuyển trạng thái câu hỏi, D-CAUDAN-01~~ — chốt
+   09/11/2026.
+3. ~~Bước 3 `API_DESIGN.md`~~ — xong 09/11/2026.
 4. Xin bản `.docx` hợp lệ của mẫu IU03 để kiểm thử nhập câu hỏi.
+5. Bước 4 `API_DESIGN.md`: lưu file, xác nhận nhập câu hỏi + lịch sử; CRUD thí sinh +
+   nhập Excel; ảnh câu hỏi (`GET /cau-hoi/{maCH}/hinh-anh/{maTN}`).
 
 Cuối mỗi tuần đối chiếu tiến độ thực tế với mốc ở mục 14 và điều chỉnh kế hoạch.
 Chưa xong auth thì không bắt đầu engine thi.

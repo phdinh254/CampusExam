@@ -1,13 +1,29 @@
 # Quyết định nghiệp vụ CampusExam
 
-Ngày cập nhật gần nhất: 05/11/2026.
+Ngày cập nhật gần nhất: 09/11/2026.
 
 Tài liệu này ghi các quyết định ảnh hưởng trực tiếp đến schema, API và kiểm thử.
 Một quyết định chỉ chuyển sang **Đã chốt** khi được người phụ trách đồ án xác nhận.
 
 ## D-KQHT-01 — Ký hiệu, trạng thái và quy tắc xóa KQHT
 
-**Trạng thái:** Chốt một phần từ tài liệu yêu cầu; trạng thái KQHT vẫn chờ xác nhận.
+**Trạng thái:** Đã chốt (09/11/2026): người phụ trách chọn **phương án A — hai trạng
+thái**. Phần ký hiệu/mã câu hỏi chốt từ tài liệu yêu cầu.
+
+### Quy tắc đã chốt (09/11/2026)
+
+- `0` ngừng sử dụng, `1` đang sử dụng; KQHT mới mặc định `1`.
+- Chuyển tự do `1 → 0` và `0 → 1` (`PATCH /api/kqht/{maKQHT}/trang-thai`).
+- KQHT ngừng sử dụng không nhận câu hỏi mới (`409 KQHT_INACTIVE`); câu hỏi và đề đã
+  có không bị ảnh hưởng.
+- Sửa được tên, mô tả, thứ tự (`PUT`); ký hiệu luôn suy ra từ thứ tự. Đã có câu hỏi
+  thì không đổi được thứ tự (`409 KQHT_IN_USE`).
+- Chỉ xóa cứng KQHT chưa có câu hỏi và chưa nằm trong cấu trúc ma trận
+  (`CAU_TRUC`); ngược lại `409 KQHT_IN_USE`, người dùng chuyển sang ngừng sử dụng.
+- `THUTU` bắt buộc trong `1..26` (đã có CHECK `CKT_KQHOCTAP_KYHIEU`).
+- CHECK `TRANGTHAI IN (0,1)` đã có trong schema (`CKT_KQHOCTAP_TRANGTHAI`).
+
+Các mục "Giả định" và "Phương án đề xuất" bên dưới giữ lại để tham khảo lịch sử.
 
 ### Dữ kiện đã xác nhận
 
@@ -111,7 +127,8 @@ chấp ghi đồng thời.
 
 ## D-CAUDAN-01 — Đánh dấu câu dẫn trong mẫu IU03
 
-**Trạng thái:** Tạm khóa để tránh suy diễn sai nghiệp vụ.
+**Trạng thái:** Đã chốt cho P0 (09/11/2026): giữ chặn như dưới đây; bổ sung nhóm câu
+dẫn khi có mẫu thực tế.
 
 - File mẫu có cột `Đánh dấu câu dẫn` nhưng toàn bộ 41 dòng đều để trống, nên
   chưa đủ bằng chứng để thiết kế quan hệ câu dẫn dùng chung.
@@ -131,8 +148,8 @@ chấp ghi đồng thời.
 
 ## D-TRANGTHAI-01 — Giá trị các cột trạng thái
 
-**Trạng thái:** Đề xuất, đã áp dụng CHECK trong schema; chờ người phụ trách xác
-nhận. Đổi giá trị thì viết migration mới.
+**Trạng thái:** Đã chốt (09/11/2026), giữ nguyên bảng dưới đây đã áp dụng CHECK trong
+schema. Đổi giá trị về sau thì viết migration mới.
 
 | Cột | Giá trị |
 |---|---|
@@ -151,6 +168,26 @@ Ràng buộc kèm theo trong schema:
 - Khóa ngoại kép bảo đảm: đề con thuộc đề gốc của kỳ thi, câu trong hoán vị
   thuộc đề gốc, câu trả lời thuộc đề con được giao. Không đổi được đề của kỳ thi
   hoặc đề con của phân công đã có bài làm.
+
+## D-CAUHOI-TT-01 — Trạng thái, sửa và xóa câu hỏi
+
+**Trạng thái:** Đã chốt (09/11/2026).
+
+- Câu hỏi mới luôn ở trạng thái đang sử dụng (D-API-03: không có nháp).
+- Chuyển tự do hai chiều đang sử dụng ⇄ ngừng sử dụng, bất kỳ lúc nào. Ngừng sử
+  dụng chỉ loại câu khỏi các lần sinh đề sau; đề đã sinh dùng bản sao trong
+  `GOM_CAU` nên không đổi.
+- Xóa cứng chỉ khi câu hỏi chưa nằm trong đề nào (`GOM_CAU`); ngược lại
+  `409 QUESTION_IN_USE`. Xóa câu hỏi xóa luôn metadata ảnh `TAINGUYEN_CAUHOI` (khi có
+  lưu file ở bước 4 phải xóa cả file trong storage).
+- Sửa nội dung/phương án/đáp án/cố định đáp án được cả khi câu đã nằm trong đề (đề
+  giữ bản sao); giao diện cảnh báo số đề đã dùng. Bắt buộc gửi `phienBan`, lệch trả
+  `409 CONCURRENCY_CONFLICT`.
+- Không đổi được KQHT và mức độ của câu hỏi vì chúng quyết định mã câu hỏi; muốn
+  phân loại lại thì thêm câu mới và ngừng dùng câu cũ.
+- `STT` cấp tự động = `MAX(STT) + 1` theo (KQHT, mức độ), trong transaction
+  serializable có `UPDLOCK, HOLDLOCK`; số đã xóa không được cấp lại trừ khi là số
+  lớn nhất.
 
 ## D-THISINH-01 — Tài khoản đăng nhập của thí sinh
 
@@ -234,9 +271,8 @@ mật khẩu của bạn mình ngay trước giờ thi là thí sinh đó không
 
 ## Các quyết định tiếp theo theo IMPLEMENTATION_PLAN
 
-- Chuyển trạng thái hợp lệ của `CAUHOI` và `KYTHI` (giá trị xem D-TRANGTHAI-01).
+- Chuyển trạng thái hợp lệ của `KYTHI` (giá trị xem D-TRANGTHAI-01).
 - Quy tắc vào thi muộn và thời điểm kết thúc bài.
-- Quy tắc sửa câu hỏi đã nằm trong đề.
 - Hủy kỳ thi, thi lại, cộng giờ và mở lại bài.
 - Chính sách xem điểm/xem lại và cách làm tròn điểm.
 - Quy tắc import dữ liệu trùng.

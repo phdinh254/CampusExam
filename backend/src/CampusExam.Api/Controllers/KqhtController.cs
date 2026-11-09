@@ -2,6 +2,7 @@ using CampusExam.Api.Authorization;
 using Microsoft.AspNetCore.Authorization;
 using CampusExam.Api.Common;
 using CampusExam.Application.Common;
+using CampusExam.Application.Common.Models;
 using CampusExam.Application.Kqht;
 using Microsoft.AspNetCore.Mvc;
 
@@ -75,5 +76,46 @@ public class KqhtController(
             nameof(GetById),
             new { maKQHT = created.MaKQHT },
             created);
+    }
+
+    /// <summary>Sửa tên, mô tả, thứ tự; đã có câu hỏi thì không đổi được thứ tự (409 KQHT_IN_USE).</summary>
+    [HttpPut("{maKQHT:int}")]
+    [ProducesResponseType<KqhtDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<KqhtDto>> Update(
+        int maKQHT,
+        UpdateKqhtCommand command,
+        CancellationToken cancellationToken)
+    {
+        var ketQua = await kqhtCommandService.UpdateAsync(maKQHT, command, cancellationToken);
+        return ketQua.ThanhCong ? Ok(ketQua.GiaTri) : ApiProblem.FromLoi(HttpContext, ketQua.Loi!);
+    }
+
+    [HttpPatch("{maKQHT:int}/trang-thai")]
+    [ProducesResponseType<KqhtDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<KqhtDto>> DoiTrangThai(
+        int maKQHT,
+        DoiTrangThaiRequest request,
+        CancellationToken cancellationToken)
+    {
+        var ketQua = await kqhtCommandService.DoiTrangThaiAsync(maKQHT, request.TrangThai!.Value, cancellationToken);
+        return ketQua.ThanhCong ? Ok(ketQua.GiaTri) : ApiProblem.FromLoi(HttpContext, ketQua.Loi!);
+    }
+
+    /// <summary>Xóa cứng KQHT chưa được câu hỏi hoặc ma trận nào dùng; ngược lại 409 KQHT_IN_USE.</summary>
+    [HttpDelete("{maKQHT:int}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> Delete(
+        int maKQHT,
+        CancellationToken cancellationToken)
+    {
+        var ketQua = await kqhtCommandService.XoaAsync(maKQHT, cancellationToken);
+        return ketQua.ThanhCong ? NoContent() : ApiProblem.FromLoi(HttpContext, ketQua.Loi!);
     }
 }

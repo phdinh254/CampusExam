@@ -1,5 +1,6 @@
 using CampusExam.Application.Common.Models;
 using CampusExam.Application.Kqht;
+using CampusExam.Domain.Entities;
 using CampusExam.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,17 +12,9 @@ public sealed class EfKqhtQuery(
     public async Task<IReadOnlyList<KqhtDto>> GetAllAsync(
         CancellationToken cancellationToken)
     {
-        return await dbContext.KqHocTaps
-            .AsNoTracking()
-            .OrderBy(kqht => kqht.ThuTu)
-            .ThenBy(kqht => kqht.MaKQHT)
-            .Select(kqht => new KqhtDto(
-                kqht.MaKQHT,
-                kqht.TenKQHT,
-                kqht.ThuTu,
-                kqht.MoTa,
-                (TrangThaiSuDung)kqht.TrangThai,
-                kqht.KyHieu))
+        return await ChieuDto(dbContext.KqHocTaps.AsNoTracking()
+                .OrderBy(kqht => kqht.ThuTu)
+                .ThenBy(kqht => kqht.MaKQHT))
             .ToListAsync(cancellationToken);
     }
 
@@ -29,16 +22,18 @@ public sealed class EfKqhtQuery(
         int maKQHT,
         CancellationToken cancellationToken)
     {
-        return await dbContext.KqHocTaps
-            .AsNoTracking()
-            .Where(kqht => kqht.MaKQHT == maKQHT)
-            .Select(kqht => new KqhtDto(
-                kqht.MaKQHT,
-                kqht.TenKQHT,
-                kqht.ThuTu,
-                kqht.MoTa,
-                (TrangThaiSuDung)kqht.TrangThai,
-                kqht.KyHieu))
+        return await ChieuDto(dbContext.KqHocTaps.AsNoTracking()
+                .Where(kqht => kqht.MaKQHT == maKQHT))
             .SingleOrDefaultAsync(cancellationToken);
     }
+
+    private IQueryable<KqhtDto> ChieuDto(IQueryable<KqHocTap> nguon) =>
+        nguon.Select(kqht => new KqhtDto(
+            kqht.MaKQHT,
+            kqht.TenKQHT,
+            kqht.ThuTu,
+            kqht.MoTa,
+            (TrangThaiSuDung)kqht.TrangThai,
+            kqht.KyHieu,
+            dbContext.CauHois.Count(cauHoi => cauHoi.MaKQHT == kqht.MaKQHT)));
 }

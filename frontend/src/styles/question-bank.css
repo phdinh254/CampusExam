@@ -1,0 +1,40 @@
+/* Thao tác theo dòng, hộp thoại xác nhận, form câu hỏi (KQHT + ngân hàng câu hỏi). */
+
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.row-actions { display: flex; justify-content: flex-end; gap: 4px; }
+.row-action { display: grid; place-items: center; width: 32px; height: 32px; border: 1px solid transparent; border-radius: 8px; color: #667085; background: transparent; cursor: pointer; }
+.row-action:hover:not(:disabled) { color: var(--primary); border-color: #e3e6f0; background: #f7f8fc; }
+.row-action.danger:hover:not(:disabled) { color: #c53030; border-color: #f5d0d0; background: #fff6f6; }
+.row-action:disabled { opacity: .35; cursor: not-allowed; }
+.row-action:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+
+.button-danger { color: #fff; background: #d64545; box-shadow: 0 7px 16px rgba(214,69,69,.2); }
+.button-danger:hover { background: #b83737; }
+
+.confirm-dialog { width: min(440px, 100%); }
+.confirm-dialog .dialog-icon.danger { color: #c53030; background: #fdecec; }
+.confirm-message p { margin: 0; color: #475467; font-size: 13px; line-height: 1.6; }
+
+/* Ngân hàng câu hỏi */
+.question-row-muted td { opacity: .62; }
+.question-cell small .has-image { color: var(--primary); font-weight: 700; }
+.pagination { display: flex; align-items: center; gap: 6px; }
+.pagination button { display: grid; place-items: center; width: 32px; height: 32px; border: 1px solid #dfe4ec; border-radius: 8px; color: #344054; background: #fff; cursor: pointer; }
+.pagination button:disabled { opacity: .4; cursor: not-allowed; }
+
+.question-dialog { width: min(760px, 100%); }
+.answer-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; }
+.answer-field > span { display: flex; align-items: center; justify-content: space-between; }
+.answer-field .correct-toggle { display: inline-flex; align-items: center; gap: 5px; color: #667085; font-weight: 600; text-transform: none; letter-spacing: 0; cursor: pointer; }
+.answer-field .correct-toggle input { width: auto; height: auto; accent-color: var(--primary); }
+.answer-field.is-correct textarea { border-color: #12a37c; box-shadow: 0 0 0 3px rgba(18,163,124,.1); }
+.answer-field textarea { min-height: 64px; }
+.checkbox-field { display: flex; align-items: flex-start; gap: 9px; margin-bottom: 17px; color: #394459; font-size: 12px; line-height: 1.5; cursor: pointer; }
+.checkbox-field input { margin-top: 2px; accent-color: var(--primary); }
+.form-warning { display: flex; gap: 8px; margin-bottom: 16px; padding: 10px 12px; border: 1px solid #f6dfae; border-radius: 9px; color: #8a5a00; background: #fffaf0; font-size: 12px; line-height: 1.5; }
+
+@media (max-width: 720px) {
+  .answer-grid { grid-template-columns: 1fr; }
+  .table-footer { flex-wrap: wrap; gap: 8px; }
+}

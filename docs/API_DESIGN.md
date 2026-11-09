@@ -230,11 +230,12 @@ Ngày được gom theo múi giờ `Asia/Ho_Chi_Minh` ở backend.
 | | Method & path | Vai trò | Ghi chú |
 |---|---|---|---|
 | ✅ | `GET /muc-do` | admin | `[{ "maMD": 1, "tenMD": "Dễ" }]` |
-| 🔁 | `GET /kqht` | admin | thêm `soCauHoi` để UI biết có được đổi thứ tự; `trangThai` sang chuỗi |
-| 🔁 | `GET /kqht/{maKQHT}` | admin | |
-| ✅ | `POST /kqht` | admin | đã có; về sau có thể bỏ `kyHieu` khỏi request vì suy ra từ `thuTu` |
-| 🆕 | `PUT /kqht/{maKQHT}` | admin | chặn đổi `thuTu` khi đã có câu hỏi ⇒ 409 `KQHT_IN_USE` |
-| 🆕 | `PATCH /kqht/{maKQHT}/trang-thai` | admin | `{ "trangThai": "ngung_su_dung" }` |
+| ✅ | `GET /kqht` | admin | có `soCauHoi` để UI biết có được đổi thứ tự/xóa |
+| ✅ | `GET /kqht/{maKQHT}` | admin | |
+| ✅ | `POST /kqht` | admin | về sau có thể bỏ `kyHieu` khỏi request vì suy ra từ `thuTu` |
+| ✅ | `PUT /kqht/{maKQHT}` | admin | `{ tenKQHT, thuTu, moTa }`; ký hiệu suy ra từ `thuTu`; đã có câu hỏi mà đổi `thuTu` ⇒ 409 `KQHT_IN_USE`; trùng ⇒ 409 `KQHT_KY_HIEU_CONFLICT` |
+| ✅ | `PATCH /kqht/{maKQHT}/trang-thai` | admin | `{ "trangThai": "ngung_su_dung" }`, chuyển tự do (D-KQHT-01) |
+| ✅ | `DELETE /kqht/{maKQHT}` | admin | 204; đã có câu hỏi hoặc nằm trong ma trận ⇒ 409 `KQHT_IN_USE` |
 
 ```json
 { "maKQHT": 1, "thuTu": 1, "kyHieu": "A", "tenKQHT": "Hiểu mô hình quan hệ",
@@ -245,13 +246,18 @@ Ngày được gom theo múi giờ `Asia/Ho_Chi_Minh` ở backend.
 
 | | Method & path | Màn hình |
 |---|---|---|
-| 🆕 | `GET /cau-hoi?tuKhoa&maKQHT&maMD&trangThai&trang&kichThuocTrang&sapXep` | Bảng câu hỏi + bộ lọc |
-| 🆕 | `GET /cau-hoi/thong-ke` | 4 thẻ mini (tổng, đang dùng, ngừng dùng, số KQHT) |
-| 🆕 | `GET /cau-hoi/{maCH}` | Xem/sửa chi tiết |
-| 🆕 | `POST /cau-hoi` | Thêm câu hỏi (multipart nếu có ảnh) |
-| 🆕 | `PUT /cau-hoi/{maCH}` | Sửa (bắt buộc `phienBan`) |
-| 🆕 | `PATCH /cau-hoi/{maCH}/trang-thai` | Ngừng/khôi phục (không xóa cứng) |
-| 🆕 | `GET /cau-hoi/{maCH}/hinh-anh/{maTN}` | Ảnh trong nội dung/phương án (stream, `Cache-Control: private`) |
+| ✅ | `GET /cau-hoi?tuKhoa&maKQHT&maMD&trangThai&trang&kichThuocTrang&sapXep` | Bảng câu hỏi + bộ lọc |
+| ✅ | `GET /cau-hoi/thong-ke` | 4 thẻ mini (tổng, đang dùng, ngừng dùng, số KQHT đang dùng) |
+| ✅ | `GET /cau-hoi/{maCH}` | Xem/sửa chi tiết |
+| ✅ | `POST /cau-hoi` | Thêm câu hỏi (JSON; thêm ảnh làm ở bước 4) |
+| ✅ | `PUT /cau-hoi/{maCH}` | Sửa nội dung (bắt buộc `phienBan`) |
+| ✅ | `PATCH /cau-hoi/{maCH}/trang-thai` | Ngừng/khôi phục, chuyển tự do |
+| ✅ | `DELETE /cau-hoi/{maCH}` | Xóa cứng khi chưa nằm trong đề, ngược lại 409 `QUESTION_IN_USE` |
+| 🆕 | `GET /cau-hoi/{maCH}/hinh-anh/{maTN}` | Ảnh trong nội dung/phương án (stream, `Cache-Control: private`) — bước 4, cùng lưu file |
+
+Query danh sách: `sapXep` nhận **một** trường `maCauHoi` | `ngayCapNhat` | `ngayTao`
+(tiền tố `-` giảm dần, mặc định `-ngayCapNhat`); `maCauHoi` sắp theo (thứ tự KQHT,
+mức độ, STT) nên `A1-2` đứng trước `A1-10`. `trangThai` nhận chuỗi như JSON.
 
 Phần tử danh sách (không trả phương án để nhẹ bảng):
 
@@ -270,7 +276,7 @@ Chi tiết:
 {
   "maCH": 102, "maCauHoi": "A2-14", "maKQHT": 1, "maMD": 2,
   "noiDung": "Chuẩn hóa dữ liệu đến dạng chuẩn 3NF nhằm loại bỏ ...",
-  "phuongAn": { "A": "...", "B": "...", "C": "...", "D": "..." },
+  "phuongAnA": "...", "phuongAnB": "...", "phuongAnC": "...", "phuongAnD": "...",
   "dapAnDung": "C", "coDinhDapAn": false, "trangThai": "dang_su_dung",
   "hinhAnh": [ { "maTN": 7, "viTri": "NOIDUNG", "thuTu": 1,
                  "url": "/api/cau-hoi/102/hinh-anh/7", "altText": null } ],
@@ -279,10 +285,15 @@ Chi tiết:
 }
 ```
 
-- `POST` không nhận `maCauHoi`/`stt`: backend cấp `STT` kế tiếp theo (KQHT, mức
-  độ) trong transaction và trả mã mới.
+- Phương án là bốn trường phẳng `phuongAnA..D` (cùng dạng với preview nhập câu
+  hỏi mục 2.5), dùng cho cả response và request.
+- `POST` nhận `{ maKQHT, maMD, noiDung, phuongAnA..D, dapAnDung, coDinhDapAn }`, không
+  nhận `maCauHoi`/`stt`: backend cấp `STT` kế tiếp theo (KQHT, mức độ) trong
+  transaction và trả mã mới. KQHT không tồn tại ⇒ 400 (lỗi trường `maKQHT`); KQHT
+  ngừng sử dụng ⇒ 409 `KQHT_INACTIVE`.
+- `PUT` nhận nội dung + `phienBan`, **không** nhận `maKQHT`/`maMD` (D-CAUHOI-TT-01).
 - Câu đã nằm trong `GOM_CAU` (`soDeDaDung > 0`) vẫn sửa được vì đề dùng bản sao,
-  nhưng UI cần cảnh báo; không bao giờ xóa cứng.
+  nhưng UI cần cảnh báo; không xóa cứng được.
 - `dapAnDung` **chỉ** có ở API quản trị.
 
 ### 2.5 Nhập câu hỏi từ Word — `/nhap-cau-hoi`
@@ -706,3 +717,35 @@ Frontend:
 
 Chưa làm (để bước sau): quản trị tài khoản (khóa/mở, cấp lại mật khẩu) đi cùng
 CRUD thí sinh ở bước 4.
+
+### Bước 3 — xong (09/11/2026)
+
+Theo D-KQHT-01 (phương án A), D-TRANGTHAI-01, D-CAUHOI-TT-01 chốt cùng ngày.
+
+Backend:
+
+- KQHT: `PUT`, `PATCH trang-thai`, `DELETE`; `GET` trả thêm `soCauHoi`. Sửa dùng
+  `ExecuteUpdate` có điều kiện "chưa có câu hỏi" ngay trong câu lệnh; khóa ngoại
+  `(MAKQHT, KYHIEU)` của `CAUHOI` chặn tiếp nếu vẫn lọt.
+- Ánh xạ EF `CAUHOI` (`PHIENBAN` là `rowversion`) và `GOM_CAU` (chỉ khóa, để đếm
+  `soDeDaDung`).
+- `/api/cau-hoi`: danh sách phân trang (`TrangDuLieu<T>`), thống kê, chi tiết, thêm,
+  sửa, đổi trạng thái, xóa. Cấp `STT` trong transaction serializable với `UPDLOCK,
+  HOLDLOCK`, thử lại tối đa 3 lần khi trùng khóa — test 8 request đồng thời nhận đủ
+  `A1-1..A1-8`.
+- Lỗi nghiệp vụ trả qua `KetQua<T>`/`LoiNghiepVu` và `ApiProblem.FromLoi` thay cho
+  dựng ProblemDetails trong từng nhánh controller. Mã lỗi mới: `KQHT_IN_USE`,
+  `KQHT_INACTIVE`, `QUESTION_NOT_FOUND`, `QUESTION_IN_USE`, `CONCURRENCY_CONFLICT`.
+- 25 integration test HTTP mới (`NganHangCauHoiApiTests`).
+
+Frontend:
+
+- Màn KQHT: cột số câu hỏi, sửa (khóa thứ tự khi đã có câu hỏi), ngừng dùng/khôi
+  phục, xóa (tắt khi đã có câu hỏi); mã mẫu đổi thành `A1-1`.
+- Màn ngân hàng câu hỏi bỏ dữ liệu mẫu, nối API thật: thẻ thống kê, tìm kiếm (chờ
+  300 ms), lọc KQHT/mức độ/trạng thái, sắp xếp, phân trang, form thêm/sửa (chọn đáp
+  án đúng, cố định phương án, cảnh báo câu đã nằm trong đề, báo xung đột phiên bản),
+  ngừng dùng/khôi phục, xóa. Bỏ trạng thái "Bản nháp".
+- `ConfirmDialog` dùng chung; Vitest cho `questionForm`.
+
+Chưa làm: ảnh trong câu hỏi (thêm/sửa/hiển thị) — cần lưu file, làm ở bước 4.

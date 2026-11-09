@@ -82,6 +82,86 @@ export type KqhtDto = {
   moTa: string | null;
   trangThai: TrangThaiSuDung;
   kyHieu: string;
+  /** Số câu hỏi thuộc KQHT; lớn hơn 0 thì không đổi được thứ tự và không xóa được. */
+  soCauHoi: number;
+};
+
+/** `PUT /kqht/{maKQHT}`: ký hiệu suy ra từ thứ tự; trạng thái đổi qua PATCH. */
+export type SuaKqhtRequest = {
+  tenKQHT: string;
+  thuTu: number;
+  moTa?: string | null;
+};
+
+export type DoiTrangThaiRequest = {
+  trangThai: TrangThaiSuDung;
+};
+
+export type CauHoiTomTat = {
+  maCH: number;
+  maCauHoi: string;
+  tomTat: string;
+  kqht: { maKQHT: number; thuTu: number; kyHieu: string };
+  maMD: MaMucDo;
+  trangThai: TrangThaiSuDung;
+  coHinhAnh: boolean;
+  ngayCapNhat: string;
+};
+
+export type ViTriHinhAnh = "NOIDUNG" | "DAA" | "DAB" | "DAC" | "DAD";
+
+export type DapAn = "A" | "B" | "C" | "D";
+
+export type CauHoiChiTiet = {
+  maCH: number;
+  maCauHoi: string;
+  maKQHT: number;
+  maMD: MaMucDo;
+  noiDung: string;
+  phuongAnA: string;
+  phuongAnB: string;
+  phuongAnC: string;
+  phuongAnD: string;
+  dapAnDung: DapAn;
+  coDinhDapAn: boolean;
+  trangThai: TrangThaiSuDung;
+  hinhAnh: { maTN: number; viTri: ViTriHinhAnh; thuTu: number; url: string; altText: string | null }[];
+  /** Số đề gốc chứa câu hỏi; lớn hơn 0 thì không xóa được. */
+  soDeDaDung: number;
+  phienBan: string;
+  ngayTao: string;
+  ngayCapNhat: string | null;
+};
+
+export type NoiDungCauHoi = {
+  noiDung: string;
+  phuongAnA: string;
+  phuongAnB: string;
+  phuongAnC: string;
+  phuongAnD: string;
+  dapAnDung: DapAn;
+  coDinhDapAn: boolean;
+};
+
+export type TaoCauHoiRequest = NoiDungCauHoi & { maKQHT: number; maMD: MaMucDo };
+
+/** Không đổi được KQHT/mức độ vì chúng quyết định mã câu hỏi. */
+export type SuaCauHoiRequest = NoiDungCauHoi & { phienBan: string };
+
+export type TruyVanCauHoi = TruyVanTrang & {
+  maKQHT?: number;
+  maMD?: MaMucDo;
+  trangThai?: TrangThaiSuDung;
+  /** `maCauHoi`, `ngayCapNhat`, `ngayTao`; tiền tố `-` là giảm dần. */
+  sapXep?: string;
+};
+
+export type ThongKeCauHoi = {
+  tongSo: number;
+  dangSuDung: number;
+  ngungSuDung: number;
+  /** Số KQHT đang sử dụng. */
+  soKQHT: number;
 };
 
 export type TaoKqhtRequest = {

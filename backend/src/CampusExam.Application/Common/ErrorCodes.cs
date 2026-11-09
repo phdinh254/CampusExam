@@ -22,6 +22,13 @@ public static class ErrorCodes
 
     public const string KqhtNotFound = "KQHT_NOT_FOUND";
     public const string KqhtKyHieuConflict = "KQHT_KY_HIEU_CONFLICT";
+    public const string KqhtInUse = "KQHT_IN_USE";
+    public const string KqhtInactive = "KQHT_INACTIVE";
+
+    public const string QuestionNotFound = "QUESTION_NOT_FOUND";
+    public const string QuestionInUse = "QUESTION_IN_USE";
+
+    public const string ConcurrencyConflict = "CONCURRENCY_CONFLICT";
 
     public const string QuestionImportEmptyFile = "QUESTION_IMPORT_EMPTY_FILE";
     public const string QuestionImportFileTooLarge = "QUESTION_IMPORT_FILE_TOO_LARGE";

@@ -63,7 +63,8 @@ public sealed class SchemaScriptTests(SqlServerDatabaseFixture database)
                     continue;
                 }
 
-                var expectedType = property.GetColumnType(table);
+                // INFORMATION_SCHEMA báo cột rowversion bằng tên cũ "timestamp".
+                var expectedType = property.GetColumnType(table) is "rowversion" ? "timestamp" : property.GetColumnType(table);
                 if (!string.Equals(expectedType, actual.Type, StringComparison.OrdinalIgnoreCase))
                 {
                     mismatches.Add($"{table.Name}.{column}: EF {expectedType}, database {actual.Type}");

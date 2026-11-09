@@ -31,6 +31,32 @@ public static class ApiProblem
         return problemDetails;
     }
 
+    /// <summary>Đổi lỗi nghiệp vụ từ tầng Application thành phản hồi ProblemDetails.</summary>
+    public static ObjectResult FromLoi(HttpContext httpContext, LoiNghiepVu loi)
+    {
+        var (status, problem) = loi.Loai switch
+        {
+            LoaiLoi.KhongHopLe => (
+                StatusCodes.Status400BadRequest,
+                Validation(httpContext, new Dictionary<string, string[]>
+                {
+                    [loi.Truong ?? "body"] = [loi.ChiTiet ?? loi.TieuDe]
+                }, loi.Code, loi.TieuDe)),
+            LoaiLoi.KhongTimThay => (
+                StatusCodes.Status404NotFound,
+                Create(httpContext, StatusCodes.Status404NotFound, loi.TieuDe, loi.Code, loi.ChiTiet)),
+            _ => (
+                StatusCodes.Status409Conflict,
+                Create(httpContext, StatusCodes.Status409Conflict, loi.TieuDe, loi.Code, loi.ChiTiet))
+        };
+
+        return new ObjectResult(problem)
+        {
+            StatusCode = status,
+            ContentTypes = { "application/problem+json" }
+        };
+    }
+
     /// <summary>Lỗi 400 kèm lỗi theo trường; khóa là tên trường JSON (camelCase).</summary>
     public static ProblemDetails Validation(
         HttpContext? httpContext,

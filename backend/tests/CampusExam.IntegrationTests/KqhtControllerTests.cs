@@ -1,3 +1,4 @@
+using CampusExam.Application.Common;
 using CampusExam.Application.Common.Models;
 using CampusExam.Api.Controllers;
 using CampusExam.Application.Kqht;
@@ -146,5 +147,14 @@ public sealed class KqhtControllerTests
 
             return Task.FromResult(result);
         }
+
+        public Task<KetQua<KqhtDto>> UpdateAsync(int maKQHT, UpdateKqhtCommand command, CancellationToken cancellationToken) =>
+            throw new NotSupportedException();
+
+        public Task<KetQua<KqhtDto>> DoiTrangThaiAsync(int maKQHT, TrangThaiSuDung trangThai, CancellationToken cancellationToken) =>
+            throw new NotSupportedException();
+
+        public Task<KetQua<KhongCo>> XoaAsync(int maKQHT, CancellationToken cancellationToken) =>
+            throw new NotSupportedException();
     }
 }
