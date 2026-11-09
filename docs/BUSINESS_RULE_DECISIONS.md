@@ -211,6 +211,52 @@ Ràng buộc kèm theo trong schema:
   serializable có `UPDLOCK, HOLDLOCK`; số đã xóa không được cấp lại trừ khi là số
   lớn nhất.
 
+## D-CONGBO-01 — Công bố kết quả kỳ thi
+
+**Trạng thái:** Đã chốt (09/11/2026): quản trị viên công bố.
+
+- Quy trình: nộp bài (hoặc hệ thống thu) → chấm tự động → quản trị viên **công bố kết
+  quả cho cả kỳ thi** → thí sinh xem được.
+- Migration 05 thêm `KYTHI.NGAYCONGBO`, `KYTHI.MTKCONGBO`. CHECK `CKT_KYTHI_CONGBO`:
+  hai cột cùng NULL hoặc cùng có giá trị, và chỉ công bố được khi `TRANGTHAIKYTHI = 3`
+  (đã kết thúc). Công bố ghi `NHATKYHD` (người, thời điểm).
+- `HIENDIEM` giữ nghĩa cũ: kỳ thi có hiện điểm cho thí sinh hay không. Thí sinh thấy
+  điểm/số câu đúng khi `NGAYCONGBO IS NOT NULL` **và** `HIENDIEM = 1`; kỳ thi
+  `HIENDIEM = 0` sau khi công bố chỉ hiện trạng thái bài (đã nộp, hệ thống thu).
+- Chưa có thu hồi công bố; cần thì chốt thêm.
+
+## D-TRANGTHAI-TS-01 — Trạng thái theo từng thí sinh trong kỳ thi
+
+**Trạng thái:** Quy ước thiết kế (09/11/2026), suy ra từ schema; áp dụng ở bước 6–8.
+
+Trạng thái kỳ thi (`KYTHI.TRANGTHAIKYTHI`) khác trạng thái của từng thí sinh. Trạng
+thái thí sinh tính từ `PHANCONGTHI`, `BAILAM` và kỳ thi, không lưu thêm cột:
+
+| Trạng thái thí sinh | Điều kiện |
+|---|---|
+| `chua_thi` | có `PHANCONGTHI`, chưa có `BAILAM`, kỳ thi chưa kết thúc |
+| `dang_thi` | `BAILAM.TRANGTHAIBAILAM = 0` |
+| `da_nop` | `BAILAM.TRANGTHAIBAILAM = 1` |
+| `he_thong_thu` | `BAILAM.TRANGTHAIBAILAM = 2` |
+| `vang_thi` | kỳ thi đã kết thúc, không có `BAILAM` |
+| `da_cham` | bài đã nộp/thu có `SOCAUDUNG` và `DIEM` |
+| `da_cong_bo` | đã chấm và `KYTHI.NGAYCONGBO IS NOT NULL` |
+
+- Phân công luôn kèm đề con (`PHANCONGTHI.MADECON` NOT NULL), nên không cần trạng
+  thái riêng "đã ghép đề".
+- Kỳ thi "đang thi" không có nghĩa thí sinh đang làm bài: thí sinh chưa vào vẫn là
+  `chua_thi`.
+
+### Quy tắc phòng thi áp dụng khi làm engine thi (bước 7)
+
+- Thí sinh chỉ thấy kỳ thi **đã phát hành** (trạng thái 1–3) mà mình **được phân
+  công**; không có đăng ký thi (mô hình quản trị viên phân công).
+- Hết giờ (theo đồng hồ server) hệ thống tự thu bài: `TRANGTHAIBAILAM = 2`.
+- Nộp bài idempotent; sau khi nộp hoặc hết hạn, mọi thay đổi câu trả lời bị từ chối.
+- Phòng thi hiển thị cảnh báo cố định: gặp sự cố báo giám thị, không tự tải lại trang
+  hay đóng trình duyệt.
+- Không đưa vào phần mềm khi chưa có quyết định của nhà trường: chính sách phúc khảo.
+
 ## D-THISINH-01 — Tài khoản đăng nhập của thí sinh
 
 **Trạng thái:** Đã chốt (06/11/2026).

@@ -40,6 +40,15 @@
 .candidate-shortcut em { display: inline-flex; align-items: center; gap: 4px; margin-top: 4px; color: var(--primary); font-size: 12px; font-style: normal; font-weight: 700; }
 .candidate-shortcut-icon { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 11px; color: var(--primary); background: #eef0fd; }
 
+/* Hướng dẫn dự thi 4 bước */
+.candidate-steps ol { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin: 0; padding: 4px 20px 20px; list-style: none; }
+.candidate-steps li { display: grid; grid-template-columns: 30px 1fr; gap: 10px; align-items: start; }
+.candidate-step-number { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; color: var(--primary); background: #eef0fd; font-size: 13px; font-weight: 800; }
+.candidate-steps li.done .candidate-step-number { color: #fff; background: #12a37c; }
+.candidate-steps strong { font-size: 13px; }
+.candidate-steps p { margin: 4px 0 6px; color: #667085; font-size: 12px; line-height: 1.55; }
+.candidate-steps a { display: inline-flex; align-items: center; gap: 4px; color: var(--primary); font-size: 12px; font-weight: 700; }
+
 /* Thi trực tuyến */
 .candidate-pending { display: grid; justify-items: center; gap: 8px; padding: 56px 20px; color: #667085; text-align: center; }
 .candidate-pending strong { color: #344054; }
@@ -58,8 +67,16 @@
 .candidate-security-card h3 { margin: 4px 0 0; font-size: 15px; }
 .candidate-security-card p { margin: 0 0 6px; color: #667085; font-size: 12px; line-height: 1.55; }
 
+@media (max-width: 1100px) {
+  .candidate-steps ol { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
 @media (max-width: 900px) {
   .candidate-shortcuts, .candidate-account-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 560px) {
+  .candidate-steps ol { grid-template-columns: 1fr; }
 }
 
 /* Điện thoại: menu xuống hàng thứ hai, cuộn ngang nếu thiếu chỗ. */

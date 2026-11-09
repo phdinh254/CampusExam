@@ -10,6 +10,17 @@ const loiTat: { to: string; icon: IconName; title: string; text: string }[] = [
   { to: "/candidate/tai-khoan", icon: "users", title: "Tài khoản cá nhân", text: "Xem thông tin hồ sơ và đổi mật khẩu đăng nhập." },
 ];
 
+/**
+ * Bốn bước dự thi. Bước 1 luôn xong: vào được trang này nghĩa là đã đăng nhập và đổi mật
+ * khẩu mặc định (tài khoản chưa đổi bị chuyển về trang đổi mật khẩu).
+ */
+const buocDuThi: { title: string; text: string; xong?: boolean; link?: { to: string; label: string } }[] = [
+  { title: "Đăng nhập và đổi mật khẩu", text: "Bạn đã đăng nhập bằng mã số thí sinh và đổi mật khẩu mặc định.", xong: true },
+  { title: "Kiểm tra lịch thi", text: "Xem kỳ thi được phân công, giờ bắt đầu và số máy. Có mặt trước giờ thi 10 phút.", link: { to: "/candidate/thi/tham-gia", label: "Tham gia thi" } },
+  { title: "Làm bài", text: "Vào phòng thi khi đến giờ. Bài làm được tự lưu; không tải lại trang hay đóng trình duyệt. Gặp sự cố hãy báo ngay cho giám thị." },
+  { title: "Nộp bài và xem kết quả", text: "Nộp bài trước khi hết giờ; hết giờ hệ thống tự thu bài. Điểm hiển thị sau khi nhà trường công bố kết quả.", link: { to: "/candidate/thi/ket-qua", label: "Kết quả thi" } },
+];
+
 /** "Thứ Hai, 09 tháng 11, 2026" theo giờ Việt Nam. */
 function ngayHomNay() {
   const text = new Date().toLocaleDateString("vi-VN", {
@@ -42,10 +53,21 @@ export default function StudentDashboard() {
         ))}
       </section>
 
-      <article className="panel notice-card">
-        <div className="notice-icon"><Icon name="clock" /></div>
-        <div><h3>Trước giờ thi</h3><p>Kiểm tra mạng, có mặt trước 10 phút và chỉ đăng nhập bằng tài khoản của mình.</p></div>
-      </article>
+      <section className="panel candidate-steps" aria-labelledby="huong-dan-du-thi">
+        <div className="panel-heading"><div><h3 id="huong-dan-du-thi">Hướng dẫn dự thi</h3></div></div>
+        <ol>
+          {buocDuThi.map((buoc, index) => (
+            <li className={buoc.xong ? "done" : undefined} key={buoc.title}>
+              <span className="candidate-step-number">{buoc.xong ? <Icon name="check" size={15} /> : index + 1}</span>
+              <div>
+                <strong>{buoc.title}</strong>
+                <p>{buoc.text}</p>
+                {buoc.link && <Link to={buoc.link.to}>{buoc.link.label} <Icon name="arrow-right" size={13} /></Link>}
+              </div>
+            </li>
+          ))}
+        </ol>
+      </section>
     </div>
   );
 }

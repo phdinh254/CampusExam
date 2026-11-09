@@ -105,6 +105,7 @@ Chi tiết ở `docs/BUSINESS_RULE_DECISIONS.md`.
 | D-CAUHOI-TT-01 (09/11/2026) | Câu hỏi chuyển trạng thái tự do; xóa cứng chỉ khi chưa nằm trong đề; KQHT ngừng dùng không nhận câu mới |
 | D-CAUDAN-01 (09/11/2026) | P0 giữ chặn dòng có "Đánh dấu câu dẫn" (`UNSUPPORTED_STEM_MARKER`) |
 | D-IMPORT-TRUNG-01 (09/11/2026) | Nhập câu hỏi/thí sinh tất cả hoặc không; mã trùng database là lỗi chặn, không ghi đè |
+| D-CONGBO-01 (09/11/2026) | Quản trị viên công bố kết quả cả kỳ thi (sau khi kết thúc); thí sinh xem điểm khi đã công bố và `HIENDIEM = 1` |
 
 ### Đề xuất, chờ người hướng dẫn xác nhận
 
@@ -475,7 +476,7 @@ làm song song giai đoạn 0 và 1.
 ## 15. Việc tiếp theo (theo thứ tự)
 
 Đã xong đến 09/11/2026: Git, proxy Vite, README, fixture SQL Server, EF mapping tài
-khoản, bootstrap admin, xác thực backend + frontend, gia cố bảo mật, migration 04,
+khoản, bootstrap admin, xác thực backend + frontend, gia cố bảo mật, migration 04, 05,
 KQHT + ngân hàng câu hỏi (bước 3).
 
 1. ~~CI GitHub Actions~~ — đã bỏ 09/11/2026 vì không thuộc yêu cầu đồ án; giữ lint

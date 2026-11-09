@@ -404,6 +404,11 @@ trả mật khẩu, kể cả mật khẩu mặc định; thí sinh tự biết 
 | 🆕 | `POST /ky-thi/{maKT}/phat-hanh` · `/huy` | 409 `EXAM_NOT_READY` / `EXAM_INVALID_STATE` |
 | 🆕 | `GET /ky-thi/{maKT}/giam-sat` | khối "Kỳ thi đang diễn ra", phòng giám sát (poll 10 giây) |
 | 🆕 | `POST /ky-thi/{maKT}/bai-lam/{maBL}/cong-gio` | `{ "soPhut": 5, "lyDo": "..." }`, có nhật ký |
+| 🆕 | `POST /ky-thi/{maKT}/cong-bo-ket-qua` | D-CONGBO-01: chỉ khi `da_ket_thuc`, ghi `NGAYCONGBO`/`MTKCONGBO` + nhật ký; công bố rồi ⇒ 409 `EXAM_RESULT_ALREADY_PUBLISHED`; chưa kết thúc ⇒ 409 `EXAM_INVALID_STATE` |
+
+Bộ lọc: danh sách kỳ thi lọc theo `trangThai` và `daCongBo`; danh sách thí sinh của kỳ
+thi lọc `trangThaiThiSinh` theo D-TRANGTHAI-TS-01 (`chua_thi`, `dang_thi`, `da_nop`,
+`he_thong_thu`, `vang_thi`).
 
 Phần tử danh sách:
 
@@ -475,8 +480,11 @@ GET /api/toi/ky-thi?phamVi=sap_toi
 `gioServer` để frontend đếm ngược theo đồng hồ server (tính độ lệch một lần),
 không tin đồng hồ máy thí sinh. `duocVaoThi` do backend quyết định.
 
-Kết quả chỉ trả `diem`/`soCauDung` khi kỳ thi `hienDiem = true`; ngược lại trả
-`null` kèm `anDiem: true`.
+`/toi/ky-thi` chỉ trả kỳ thi đã phát hành (1–3) mà thí sinh được phân công.
+
+Kết quả (D-CONGBO-01): kỳ thi chưa công bố không xuất hiện ở `/toi/ket-qua`. Đã công
+bố thì trả `diem`/`soCauDung` khi `hienDiem = true`; ngược lại trả `null` kèm
+`anDiem: true` và chỉ hiện trạng thái bài (`da_nop`, `he_thong_thu`, `vang_thi`).
 
 ### 2.12 Làm bài — `/toi/ky-thi/{maKT}/bai-lam`
 

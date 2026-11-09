@@ -60,8 +60,8 @@ Ngày cập nhật gần nhất: 09/11/2026.
   clustered, CHECK cho mọi cột trạng thái (xem `D-TRANGTHAI-01`), `rowversion`
   cho câu hỏi/ma trận/kỳ thi/bài làm, bảng phiên đăng nhập, bản sao hình ảnh
   của đề và seed ba mức độ.
-- Database đã có: chạy `migrations/` theo thứ tự 01 → 02 → 03 → 04; các script chạy
-  lại được và giữ dữ liệu.
+- Database đã có: chạy `migrations/` theo thứ tự 01 → 02 → 03 → 04 → 05; các script
+  chạy lại được và giữ dữ liệu.
 - Đã kiểm tra trên SQL Server 2019 cục bộ: database tạo mới và database nâng cấp
   từ bản sao `CampusExam` có cấu trúc giống hệt nhau; 28 kịch bản ghi dữ liệu
   hợp lệ/không hợp lệ cho kết quả đúng.
@@ -70,6 +70,10 @@ Ngày cập nhật gần nhất: 09/11/2026.
 - Migration 04 đã kiểm tra trên database tạm: dựng từ baseline cũ rồi chạy 04 cho
   cấu trúc giống hệt baseline mới (339 cột/ràng buộc/index), giữ dữ liệu, chạy lại
   được.
+- Migration 05 (09/11/2026, D-CONGBO-01): thêm `KYTHI.NGAYCONGBO`, `MTKCONGBO` và CHECK
+  `CKT_KYTHI_CONGBO`. Đã kiểm tra trên database tạm: baseline cũ + 05 giống hệt
+  baseline mới, chạy lần hai tự bỏ qua. **Database `CampusExam` phát triển chưa chạy
+  05**; chưa có code dùng hai cột này nên không lỗi.
 
 ### Tài khoản
 
@@ -94,7 +98,7 @@ Ngày cập nhật gần nhất: 09/11/2026.
 
 - Build solution thành công, không có cảnh báo hoặc lỗi tại mốc gần nhất (Debug và
   Release `-warnaserror`); `dotnet format --verify-no-changes` sạch.
-- 167/167 kiểm thử backend thành công: 45 unit test và 122 integration test (gồm
+- 171/171 kiểm thử backend thành công: 45 unit test và 126 integration test (gồm
   test HTTP qua `WebApplicationFactory` cho route, mã lỗi, OpenAPI, toàn bộ luồng
   xác thực, KQHT, ngân hàng câu hỏi, nhập câu hỏi và thí sinh trên SQL Server tạm).
 - 48/48 kiểm thử frontend (Vitest, `npm test`) cho `httpClient`, xác thực, form câu
@@ -231,10 +235,12 @@ Ngày cập nhật gần nhất: 09/11/2026.
 
 - Menu theo yêu cầu: Trang chủ · Thi trực tuyến (Tham gia thi, Kết quả thi) · Tài khoản
   cá nhân; trên điện thoại menu xuống hàng thứ hai và hiện thẳng hai mục con.
-- Trang chủ bỏ dữ liệu giả (lịch thi, điểm, phòng thi), chỉ còn lời chào, lối tắt và lưu ý.
+- Trang chủ bỏ dữ liệu giả (lịch thi, điểm, phòng thi), chỉ còn lời chào và lối tắt.
 - Tài khoản cá nhân: `GET /api/toi/ho-so` (chỉ thí sinh, lấy MSTS từ token), đổi mật
   khẩu, đăng xuất. Thí sinh không tự sửa hồ sơ.
 - Tham gia thi / Kết quả thi: khung trang, ghi rõ đang phát triển; cần phần kỳ thi.
+- Trang chủ có hướng dẫn dự thi 4 bước (đăng nhập → kiểm tra lịch thi → làm bài → nộp/xem
+  kết quả). Quyết định và quy tắc cho phần kỳ thi: D-CONGBO-01, D-TRANGTHAI-TS-01.
 - Chưa xem trên trình duyệt với backend thật.
 
 ## Bước nhỏ tiếp theo

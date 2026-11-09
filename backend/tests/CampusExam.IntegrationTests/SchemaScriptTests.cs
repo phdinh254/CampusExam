@@ -80,6 +80,47 @@ public sealed class SchemaScriptTests(SqlServerDatabaseFixture database)
         Assert.Empty(mismatches);
     }
 
+    /// <summary>D-CONGBO-01: chỉ công bố kết quả kỳ thi đã kết thúc, luôn kèm người công bố.</summary>
+    [Theory]
+    [InlineData(0, true, false)]  // nháp
+    [InlineData(4, true, false)]  // đã hủy
+    [InlineData(3, false, false)] // đã kết thúc nhưng thiếu người công bố
+    [InlineData(3, true, true)]
+    public async Task Exam_result_can_only_be_published_after_exam_ends(byte trangThai, bool coNguoiCongBo, bool hopLe)
+    {
+        await database.ResetAsync();
+        await using var connection = new SqlConnection(database.ConnectionString);
+        await connection.OpenAsync();
+        await using var command = new SqlCommand(
+            $"""
+            DECLARE @mtk int;
+            INSERT dbo.TAIKHOAN (TENDN, MATKHAUHASH, VAITRO, HOTEN, TRANGTHAI, NGAYTAO)
+            VALUES ('admin', 'x', 'ADMIN', N'Quản trị', 1, SYSUTCDATETIME());
+            SET @mtk = SCOPE_IDENTITY();
+            INSERT dbo.MATRAN (TENMT, TONGSOCAU, THOIGIANLAM, TRANGTHAIMATRAN, NGAYTAO)
+            VALUES (N'Ma trận', 1, 45, 1, SYSUTCDATETIME());
+            INSERT dbo.DEGOC (MTK, MAMT, MADEGOCHIENTHI, TONGSOCAU, NGAYTAO)
+            VALUES (@mtk, SCOPE_IDENTITY(), 'DE-1', 1, SYSUTCDATETIME());
+            INSERT dbo.KYTHI (MTK, MADE, TENKT, MONTHI, TGBATDAU, THOILUONG, HIENDIEM, CACHPHANDE,
+                TRANGTHAIKYTHI, NGAYTAO, NGAYPHATHANH, SOPHUTCHOVAOTRE, CHOXEMLAI)
+            VALUES (@mtk, SCOPE_IDENTITY(), N'Giữa kỳ', N'CSDL', SYSUTCDATETIME(), 45, 1, 0,
+                {trangThai}, SYSUTCDATETIME(), SYSUTCDATETIME(), 10, 0);
+            UPDATE dbo.KYTHI SET NGAYCONGBO = SYSUTCDATETIME(), MTKCONGBO = {(coNguoiCongBo ? "@mtk" : "NULL")};
+            """,
+            connection);
+
+        if (hopLe)
+        {
+            await command.ExecuteNonQueryAsync();
+            Assert.Equal(1, await ScalarAsync(connection, "SELECT COUNT(*) FROM dbo.KYTHI WHERE NGAYCONGBO IS NOT NULL;"));
+        }
+        else
+        {
+            var exception = await Assert.ThrowsAsync<SqlException>(() => command.ExecuteNonQueryAsync());
+            Assert.Contains("CKT_KYTHI_CONGBO", exception.Message);
+        }
+    }
+
     private static async Task<int> ScalarAsync(SqlConnection connection, string sql)
     {
         await using var command = new SqlCommand(sql, connection);

@@ -1,0 +1,50 @@
+﻿-- CampusExam - công bố kết quả kỳ thi (D-CONGBO-01).
+-- Thêm KYTHI.NGAYCONGBO, KYTHI.MTKCONGBO: thí sinh chỉ thấy kết quả sau khi quản trị viên công bố,
+-- và chỉ công bố được kỳ thi đã kết thúc. Kỳ thi hiện có giữ nguyên ở trạng thái chưa công bố.
+-- Chạy lại được. Lỗi ở bất kỳ bước nào sẽ hoàn tác toàn bộ.
+USE [CampusExam];
+GO
+
+SET ANSI_NULLS ON;
+SET QUOTED_IDENTIFIER ON;
+SET XACT_ABORT ON;
+SET NOCOUNT ON;
+GO
+
+IF COL_LENGTH(N'dbo.KYTHI', N'NGAYCONGBO') IS NOT NULL
+BEGIN
+    PRINT N'Migration 05 đã được áp dụng, bỏ qua.';
+    SET NOEXEC ON;
+END
+ELSE IF OBJECT_ID(N'dbo.KHOADANGNHAP', N'U') IS NULL
+BEGIN
+    RAISERROR (N'Cần chạy migration 04 trước.', 16, 1);
+    SET NOEXEC ON;
+END;
+GO
+
+BEGIN TRANSACTION;
+GO
+
+ALTER TABLE dbo.KYTHI ADD
+    NGAYCONGBO  datetime2  NULL,
+    MTKCONGBO   int        NULL;
+GO
+IF @@TRANCOUNT = 0 SET NOEXEC ON;
+GO
+
+ALTER TABLE dbo.KYTHI WITH CHECK ADD
+    CONSTRAINT CKT_KYTHI_CONGBO CHECK (
+        (NGAYCONGBO IS NULL AND MTKCONGBO IS NULL)
+        OR (NGAYCONGBO IS NOT NULL AND MTKCONGBO IS NOT NULL AND TRANGTHAIKYTHI = 3)),
+    CONSTRAINT FK_KYTHI_CONGBO_TAIKHOAN FOREIGN KEY (MTKCONGBO) REFERENCES dbo.TAIKHOAN (MTK);
+CREATE INDEX CONG_BO_FK ON dbo.KYTHI (MTKCONGBO);
+GO
+IF @@TRANCOUNT = 0 SET NOEXEC ON;
+GO
+
+COMMIT TRANSACTION;
+GO
+
+SET NOEXEC OFF;
+GO
