@@ -188,12 +188,13 @@ chỉ thay đổi bằng file mới trong `database/migrations/`; cập nhật �
 - [ ] Bảng lịch sử migration, dữ liệu demo.
 - [~] Frontend: design tokens, component cơ bản, loading/empty (xong); trang
   403/404/lỗi chưa có.
-- [x] CI GitHub Actions chạy format + build + test backend (SQL Server container) và
-  typecheck + lint (Oxlint) + test + build frontend (xong 08-09/11/2026).
+- [x] Kiểm tra chạy tay: `dotnet format`, build, test backend; typecheck, lint
+  (Oxlint), test, build frontend. Không dùng CI vì không thuộc yêu cầu đồ án (bỏ
+  09/11/2026).
 - [x] README: cài SQL Server, chạy script database, User Secrets, lệnh chạy.
 
-**Nghiệm thu:** máy mới dựng được dự án từ README; script tạo database sạch; CI
-xanh; không có secret trong Git; frontend gọi được API.
+**Nghiệm thu:** máy mới dựng được dự án từ README; script tạo database sạch; build và
+test xanh; không có secret trong Git; frontend gọi được API.
 
 ### Giai đoạn 1 - Xác thực và tài khoản (Tuần 2-3, đến 22/11/2026)
 
@@ -394,21 +395,15 @@ Mọi API danh sách có phân trang; mọi API ghi có validate, authorize và 
 Ngưỡng khởi đầu 70% coverage cho `Application`/`Domain`; các quy tắc P0 phải có
 test cho từng ca nghiệp vụ.
 
-## 10. CI/CD và môi trường
+## 10. Kiểm tra và môi trường
 
-### Pipeline mỗi pull request
-
-1. Restore, quét secret.
-2. Backend: format/analyzer, build Release, unit + integration test (SQL Server
-   container).
-3. Frontend: lint, typecheck, test, build.
-4. E2E smoke nếu hạ tầng cho phép.
-5. Không merge khi pipeline đỏ.
+Đồ án không yêu cầu CI/CD; kiểm tra chạy tay trước khi commit (lệnh ở README, mục
+"Kiểm thử"): format, build, test backend; typecheck, lint, test, build frontend.
 
 ### Môi trường
 
 - `Development`: dữ liệu demo, User Secrets.
-- `Test/CI`: database tạo mới mỗi lần chạy.
+- `Test`: database tạo mới mỗi lần chạy integration test.
 - `Staging`: gần production, dùng cho UAT/demo.
 - `Production`: secret từ biến môi trường, HTTPS bắt buộc, log hạn chế dữ liệu cá nhân.
 
@@ -419,7 +414,7 @@ tục rollback.
 
 | Giai đoạn | Thành viên A | Thành viên B | Làm chung |
 |---|---|---|---|
-| 0-1 | Git/CI, EF mapping, test SQL Server, auth API | UI kit, proxy/CORS, auth UI | API contract, README |
+| 0-1 | Git, EF mapping, test SQL Server, auth API | UI kit, proxy/CORS, auth UI | API contract, README |
 | 2-3 | API câu hỏi, commit import, lưu file | UI KQHT, câu hỏi, import | Test end-to-end từng lát cắt |
 | 4-6 | Ma trận, sinh đề, kỳ thi, phân công | UI ma trận, preview đề, kỳ thi, monitor | Test invariant, nghiệm thu phát hành |
 | 7 | Start/tự lưu/nộp/job tự thu | Giao diện thi, timer, mất mạng | Test tải, race condition |
@@ -466,7 +461,7 @@ Giao việc theo lát cắt dọc: migration/entity, use case, API, UI, test, t�
 
 | Mốc | Hạn | Sản phẩm chứng minh |
 |---|---:|---|
-| M1 - Nền tảng | 22/11/2026 (cuối tuần 3) | Git + CI xanh, dựng DB từ README, đăng nhập/phân quyền |
+| M1 - Nền tảng | 22/11/2026 (cuối tuần 3) | Git, test xanh, dựng DB từ README, đăng nhập/phân quyền |
 | M2 - Ngân hàng | 29/11/2026 (cuối tuần 4) | Câu hỏi và thí sinh: CRUD + import end-to-end |
 | M3 - Đề thi | 20/12/2026 (cuối tuần 7) | Ma trận hợp lệ, sinh/preview đề gốc và đề con |
 | M4 - Kỳ thi | 27/12/2026 (cuối tuần 8) | Tạo, phân công, phát hành, theo dõi kỳ thi |
@@ -480,11 +475,11 @@ làm song song giai đoạn 0 và 1.
 ## 15. Việc tiếp theo (theo thứ tự)
 
 Đã xong đến 09/11/2026: Git, proxy Vite, README, fixture SQL Server, EF mapping tài
-khoản, bootstrap admin, xác thực backend + frontend, gia cố bảo mật, migration 04, CI,
+khoản, bootstrap admin, xác thực backend + frontend, gia cố bảo mật, migration 04,
 KQHT + ngân hàng câu hỏi (bước 3).
 
-1. ~~CI GitHub Actions~~ — xong 08/11/2026, lần chạy đầu trên GitHub xanh ở commit
-   `f4a164f`; lint frontend bằng Oxlint thêm 09/11/2026.
+1. ~~CI GitHub Actions~~ — đã bỏ 09/11/2026 vì không thuộc yêu cầu đồ án; giữ lint
+   frontend (`npm run lint`, Oxlint) để chạy tay.
 2. ~~Chốt D-KQHT-01, D-TRANGTHAI-01, chuyển trạng thái câu hỏi, D-CAUDAN-01~~ — chốt
    09/11/2026.
 3. ~~Bước 3 `API_DESIGN.md`~~ — xong 09/11/2026.

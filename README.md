@@ -66,10 +66,12 @@ Integration test tạo database tạm `CampusExam_Test_*` từ `database/CampusE
 trên SQL Server cục bộ rồi xóa khi xong; đổi máy chủ bằng biến môi trường
 `CAMPUSEXAM_TEST_SQLSERVER`.
 
-CI (`.github/workflows/ci.yml`) chạy mỗi lần push lên `main` và mỗi pull request:
-backend kiểm tra `dotnet format`, build Release không cảnh báo, chạy toàn bộ test trên
-container SQL Server 2022; frontend chạy `npm ci`, typecheck, test, build. Trước khi
-push, chạy `dotnet format CampusExam.sln` trong `backend/` để tránh CI báo lỗi định dạng.
+Kiểm tra thêm trước khi commit (chạy tay, dự án không dùng CI):
+
+```
+cd backend && dotnet format CampusExam.sln --verify-no-changes
+cd frontend && npm run typecheck && npm run lint
+```
 
 ## Cấu hình triển khai
 

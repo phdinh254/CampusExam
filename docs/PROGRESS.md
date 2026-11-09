@@ -169,17 +169,13 @@ Ngày cập nhật gần nhất: 09/11/2026.
   (`Auth:TokenCheckCacheSeconds`); đổi mật khẩu xóa cache ngay. API khóa tài khoản/
   cấp lại mật khẩu sau này phải xóa cache tương tự.
 
-### CI (08/11/2026)
+### Kiểm tra code (09/11/2026)
 
-- `.github/workflows/ci.yml`: job backend (restore, `dotnet format --verify-no-changes`,
-  build Release `-warnaserror`, unit + integration test trên container SQL Server 2022)
-  và job frontend (`npm ci`, typecheck, Vitest, build).
-- Đã chạy thử cục bộ từng bước (format sạch, build Release 0 cảnh báo, `npm ci` trên
-  bản sao sạch). Lần chạy đầu trên GitHub xanh ở commit `f4a164f`.
-- 09/11/2026: thêm bước lint frontend bằng Oxlint (`npm run lint`, cấu hình
-  `frontend/.oxlintrc.json`). Không dùng ESLint vì typescript-eslint chỉ hỗ trợ
-  TypeScript < 6.1, còn TypeScript 7 (bản Go) không có API JavaScript cho parser.
-  Lỗi làm CI thất bại; cảnh báo chỉ hiển thị.
+- Đã bỏ CI GitHub Actions (thêm ngày 08/11) vì không thuộc yêu cầu đồ án. Kiểm tra
+  chạy tay theo README, mục "Kiểm thử".
+- Lint frontend bằng Oxlint (`npm run lint`, cấu hình `frontend/.oxlintrc.json`).
+  Không dùng ESLint vì typescript-eslint chỉ hỗ trợ TypeScript < 6.1, còn
+  TypeScript 7 (bản Go) không có API JavaScript cho parser.
 
 ### Màn hình KQHT (08/11/2026)
 
