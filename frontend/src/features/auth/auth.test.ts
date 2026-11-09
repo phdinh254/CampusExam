@@ -78,20 +78,20 @@ describe("thông báo lỗi đăng nhập", () => {
   });
 });
 
+function stubFetch(status = 200, body: unknown = {}) {
+  const fetchMock = vi.fn(async (_url: string, _init: RequestInit) =>
+    status === 204
+      ? new Response(null, { status })
+      : new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } }));
+  vi.stubGlobal("fetch", fetchMock);
+  return fetchMock;
+}
+
 describe("xacThucApi", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
     authSession.clear();
   });
-
-  function stubFetch(status = 200, body: unknown = {}) {
-    const fetchMock = vi.fn(async (_url: string, _init: RequestInit) =>
-      status === 204
-        ? new Response(null, { status })
-        : new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } }));
-    vi.stubGlobal("fetch", fetchMock);
-    return fetchMock;
-  }
 
   it("làm mới phiên gửi cookie và header chống CSRF, không gửi token cũ", async () => {
     authSession.setAccessToken("cu");

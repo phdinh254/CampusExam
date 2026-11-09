@@ -61,7 +61,7 @@ dự thi được từ đầu đến cuối:
   `CAUHOI`, `TAINGUYEN_CAUHOI`.
 - Chưa có CRUD thí sinh, ma trận, sinh đề, kỳ thi, engine làm bài, chấm điểm, báo cáo.
 - Chưa có quản trị tài khoản (khóa/mở, cấp lại mật khẩu).
-- Chưa có bảng lịch sử migration, dữ liệu demo, linter frontend (ESLint).
+- Chưa có bảng lịch sử migration, dữ liệu demo.
 
 ## 3. Phạm vi
 
@@ -187,8 +187,8 @@ chỉ thay đổi bằng file mới trong `database/migrations/`; cập nhật �
 - [ ] Bảng lịch sử migration, dữ liệu demo.
 - [~] Frontend: design tokens, component cơ bản, loading/empty (xong); trang
   403/404/lỗi chưa có.
-- [~] CI GitHub Actions chạy format + build + test backend (SQL Server container) và
-  typecheck + test + build frontend (xong 08/11/2026); còn linter frontend (ESLint).
+- [x] CI GitHub Actions chạy format + build + test backend (SQL Server container) và
+  typecheck + lint (Oxlint) + test + build frontend (xong 08-09/11/2026).
 - [x] README: cài SQL Server, chạy script database, User Secrets, lệnh chạy.
 
 **Nghiệm thu:** máy mới dựng được dự án từ README; script tạo database sạch; CI
@@ -480,7 +480,7 @@ khoản, bootstrap admin, xác thực backend + frontend, gia cố bảo mật, 
 KQHT + ngân hàng câu hỏi (bước 3).
 
 1. ~~CI GitHub Actions~~ — xong 08/11/2026, lần chạy đầu trên GitHub xanh ở commit
-   `f4a164f`; còn ESLint cho frontend.
+   `f4a164f`; lint frontend bằng Oxlint thêm 09/11/2026.
 2. ~~Chốt D-KQHT-01, D-TRANGTHAI-01, chuyển trạng thái câu hỏi, D-CAUDAN-01~~ — chốt
    09/11/2026.
 3. ~~Bước 3 `API_DESIGN.md`~~ — xong 09/11/2026.

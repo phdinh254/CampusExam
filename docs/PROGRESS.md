@@ -176,6 +176,10 @@ Ngày cập nhật gần nhất: 09/11/2026.
   và job frontend (`npm ci`, typecheck, Vitest, build).
 - Đã chạy thử cục bộ từng bước (format sạch, build Release 0 cảnh báo, `npm ci` trên
   bản sao sạch). Lần chạy đầu trên GitHub xanh ở commit `f4a164f`.
+- 09/11/2026: thêm bước lint frontend bằng Oxlint (`npm run lint`, cấu hình
+  `frontend/.oxlintrc.json`). Không dùng ESLint vì typescript-eslint chỉ hỗ trợ
+  TypeScript < 6.1, còn TypeScript 7 (bản Go) không có API JavaScript cho parser.
+  Lỗi làm CI thất bại; cảnh báo chỉ hiển thị.
 
 ### Màn hình KQHT (08/11/2026)
 
@@ -207,7 +211,6 @@ Ngày cập nhật gần nhất: 09/11/2026.
 
 ## Bước nhỏ tiếp theo
 
-- ESLint cho frontend (bổ sung vào CI).
 - Bước 4 của `API_DESIGN.md`: lưu file, xác nhận nhập câu hỏi + lịch sử, ảnh câu
   hỏi; CRUD thí sinh + nhập Excel, quản trị tài khoản.
 
