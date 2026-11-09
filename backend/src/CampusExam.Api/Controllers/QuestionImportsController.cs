@@ -1,20 +1,26 @@
 using CampusExam.Api.Authorization;
-using Microsoft.AspNetCore.Authorization;
 using CampusExam.Api.Common;
 using CampusExam.Application.Common;
+using CampusExam.Application.Common.Models;
 using CampusExam.Application.QuestionImports;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CampusExam.Api.Controllers;
 
+/// <summary>Nhập câu hỏi từ DOCX hai bước (docs/API_DESIGN.md mục 2.5).</summary>
 [ApiController]
 [Authorize(Policy = Policies.AdminOnly)]
 [Route("api/nhap-cau-hoi")]
 public sealed class QuestionImportsController(
-    IQuestionDocxParser parser) : ControllerBase
+    IQuestionImportService importService) : ControllerBase
 {
     private const long MaximumFileSize = 20 * 1024 * 1024;
 
+    /// <summary>
+    /// Đọc tệp, đối chiếu database. Không còn dòng lỗi thì giữ tệp 30 phút và trả
+    /// <c>maXemTruoc</c> để xác nhận; còn lỗi thì <c>maXemTruoc</c> là null.
+    /// </summary>
     [HttpPost("xem-truoc")]
     [Consumes("multipart/form-data")]
     [RequestSizeLimit(MaximumFileSize)]
@@ -63,8 +69,8 @@ public sealed class QuestionImportsController(
 
         try
         {
-            var preview = await parser.PreviewAsync(stream, cancellationToken);
-            return Ok(preview);
+            var tenFile = Path.GetFileName(file.FileName);
+            return Ok(await importService.XemTruocAsync(stream, tenFile, NguoiThucHien(), cancellationToken));
         }
         catch (QuestionImportFormatException exception)
         {
@@ -76,4 +82,46 @@ public sealed class QuestionImportsController(
                 exception.Message));
         }
     }
+
+    /// <summary>
+    /// Ghi toàn bộ câu hỏi và hình của bản xem trước trong một transaction. Còn lỗi (dữ liệu đổi từ
+    /// lúc xem trước) ⇒ 409 QUESTION_IMPORT_HAS_ERRORS; quá 30 phút ⇒ 410 IMPORT_PREVIEW_EXPIRED.
+    /// </summary>
+    [HttpPost("xem-truoc/{maXemTruoc}/xac-nhan")]
+    [ProducesResponseType<LanImportDto>(StatusCodes.Status201Created)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status410Gone)]
+    public async Task<ActionResult<LanImportDto>> Confirm(string maXemTruoc, CancellationToken cancellationToken)
+    {
+        var ketQua = await importService.XacNhanAsync(maXemTruoc, NguoiThucHien(), cancellationToken);
+        return ketQua.ThanhCong
+            ? CreatedAtAction(nameof(GetById), new { maLanImport = ketQua.GiaTri!.MaLanImport }, ketQua.GiaTri)
+            : ApiProblem.FromLoi(HttpContext, ketQua.Loi!);
+    }
+
+    /// <summary>Lịch sử các lần nhập câu hỏi, mới nhất trước.</summary>
+    [HttpGet]
+    [ProducesResponseType<TrangDuLieu<LanImportDto>>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<TrangDuLieu<LanImportDto>>> GetPage(
+        [FromQuery] TruyVanTrang truyVan,
+        CancellationToken cancellationToken) =>
+        Ok(await importService.GetPageAsync(truyVan, cancellationToken));
+
+    [HttpGet("{maLanImport:int}")]
+    [ProducesResponseType<LanImportDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<LanImportDto>> GetById(int maLanImport, CancellationToken cancellationToken)
+    {
+        var lan = await importService.GetByIdAsync(maLanImport, cancellationToken);
+        return lan is null
+            ? NotFound(ApiProblem.Create(HttpContext, StatusCodes.Status404NotFound, "Không tìm thấy lần nhập",
+                ErrorCodes.ImportNotFound, $"Không tồn tại lần nhập có mã {maLanImport}."))
+            : Ok(lan);
+    }
+
+    private NguoiThucHien NguoiThucHien() => new(
+        int.Parse(User.FindFirst(CampusClaims.MaTaiKhoan)!.Value),
+        HttpContext.Connection.RemoteIpAddress?.ToString());
 }

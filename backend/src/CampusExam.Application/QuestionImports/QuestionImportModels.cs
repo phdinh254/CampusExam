@@ -55,7 +55,24 @@ public sealed record QuestionImportPreview(
     [property: JsonPropertyName("soDongHopLe")] int ValidRows,
     [property: JsonPropertyName("soDongLoi")] int ErrorRows,
     [property: JsonPropertyName("tongHinhAnh")] int TotalMedia,
-    [property: JsonPropertyName("dong")] IReadOnlyList<QuestionImportRowPreview> Rows);
+    [property: JsonPropertyName("dong")] IReadOnlyList<QuestionImportRowPreview> Rows)
+{
+    /// <summary>Mã bản xem trước để xác nhận nhập; null khi còn dòng lỗi (không xác nhận được).</summary>
+    [JsonPropertyName("maXemTruoc")]
+    public string? PreviewId { get; init; }
+
+    /// <summary>Hạn xác nhận (UTC); null khi <see cref="PreviewId"/> null.</summary>
+    [JsonPropertyName("hetHan")]
+    public DateTime? ExpiresAt { get; init; }
+
+    /// <summary>Tạo lại bản xem trước với danh sách dòng mới và đếm lại số dòng hợp lệ/lỗi.</summary>
+    public static QuestionImportPreview FromRows(IReadOnlyList<QuestionImportRowPreview> rows) => new(
+        rows.Count,
+        rows.Count(row => row.IsValid),
+        rows.Count(row => !row.IsValid),
+        rows.Sum(row => row.Media.Count),
+        rows);
+}
 
 public sealed class QuestionImportFormatException(
     string message,

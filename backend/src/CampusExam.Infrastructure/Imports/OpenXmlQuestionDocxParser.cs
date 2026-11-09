@@ -22,8 +22,29 @@ public sealed partial class OpenXmlQuestionDocxParser(GioiHanTepDocx gioiHan) : 
     {
     }
 
+    /// <summary>Định dạng hình trình duyệt hiển thị được; định dạng khác (EMF, WMF, TIFF...) chỉ cảnh báo.</summary>
+    private static readonly HashSet<string> DinhDangHinhWeb = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "image/png", "image/jpeg", "image/gif", "image/webp", "image/bmp"
+    };
+
     public Task<QuestionImportPreview> PreviewAsync(
         Stream docxStream,
+        CancellationToken cancellationToken) =>
+        Task.FromResult(Doc(docxStream, mediaSink: null, cancellationToken));
+
+    public Task<QuestionImportDocument> ReadAsync(
+        Stream docxStream,
+        CancellationToken cancellationToken)
+    {
+        var media = new List<QuestionImportMediaContent>();
+        var preview = Doc(docxStream, media, cancellationToken);
+        return Task.FromResult(new QuestionImportDocument(preview, media));
+    }
+
+    private QuestionImportPreview Doc(
+        Stream docxStream,
+        List<QuestionImportMediaContent>? mediaSink,
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(docxStream);
@@ -38,8 +59,7 @@ public sealed partial class OpenXmlQuestionDocxParser(GioiHanTepDocx gioiHan) : 
                 isEditable: false,
                 new OpenSettings { AutoSave = false, MaxCharactersInPart = gioiHan.KyTuMoiPhan });
 
-            var preview = Parse(document, cancellationToken);
-            return Task.FromResult(preview);
+            return Parse(document, mediaSink, cancellationToken);
         }
         catch (Exception exception) when (LaLoiVuotKyTu(exception))
         {
@@ -111,6 +131,7 @@ public sealed partial class OpenXmlQuestionDocxParser(GioiHanTepDocx gioiHan) : 
 
     private static QuestionImportPreview Parse(
         WordprocessingDocument document,
+        List<QuestionImportMediaContent>? mediaSink,
         CancellationToken cancellationToken)
     {
         var mainPart = document.MainDocumentPart
@@ -139,7 +160,7 @@ public sealed partial class OpenXmlQuestionDocxParser(GioiHanTepDocx gioiHan) : 
                 continue;
             }
 
-            var row = ParseRow(mainPart, cells, index + 1, seenCodes);
+            var row = ParseRow(mainPart, cells, index + 1, seenCodes, mediaSink);
             rows.Add(row);
         }
 
@@ -155,7 +176,8 @@ public sealed partial class OpenXmlQuestionDocxParser(GioiHanTepDocx gioiHan) : 
         MainDocumentPart mainPart,
         IReadOnlyList<W.TableCell> cells,
         int rowNumber,
-        ISet<string> seenCodes)
+        ISet<string> seenCodes,
+        List<QuestionImportMediaContent>? mediaSink)
     {
         var issues = new List<QuestionImportIssue>();
         var code = NullIfWhiteSpace(GetPlainText(cells[1]));
@@ -281,6 +303,32 @@ public sealed partial class OpenXmlQuestionDocxParser(GioiHanTepDocx gioiHan) : 
                     issues,
                     "UNPLACED_MEDIA",
                     $"Không xác định được vị trí của hình {source.FileName}.");
+                continue;
+            }
+
+            if (!DinhDangHinhWeb.Contains(source.ContentType))
+            {
+                issues.Add(new QuestionImportIssue(
+                    "UNSUPPORTED_IMAGE_FORMAT",
+                    $"Hình {source.FileName} ({source.ContentType}) vẫn được lưu nhưng trình duyệt có thể không hiển thị; nên chuyển sang PNG/JPEG.",
+                    QuestionImportIssueSeverity.Warning));
+            }
+
+            if (mediaSink is not null)
+            {
+                using var data = new MemoryStream();
+                using (var partStream = source.Part.GetStream(FileMode.Open, FileAccess.Read))
+                {
+                    partStream.CopyTo(data);
+                }
+
+                mediaSink.Add(new QuestionImportMediaContent(
+                    rowNumber,
+                    source.Position,
+                    source.Order,
+                    source.FileName,
+                    source.ContentType,
+                    data.ToArray()));
             }
         }
 
@@ -366,7 +414,8 @@ public sealed partial class OpenXmlQuestionDocxParser(GioiHanTepDocx gioiHan) : 
             media[imageNumber] = new MediaSource(
                 imageNumber,
                 Path.GetFileName(imagePart.Uri.OriginalString),
-                imagePart.ContentType);
+                imagePart.ContentType,
+                imagePart);
             return;
         }
 
@@ -472,6 +521,8 @@ public sealed partial class OpenXmlQuestionDocxParser(GioiHanTepDocx gioiHan) : 
             order++;
             var marker = $"{{{{media:{position}:{order}}}}}";
             source.FinalMarker = marker;
+            source.Position = position;
+            source.Order = order;
             outputMedia.Add(new QuestionImportMediaPreview(
                 marker,
                 position,
@@ -562,7 +613,8 @@ public sealed partial class OpenXmlQuestionDocxParser(GioiHanTepDocx gioiHan) : 
     private sealed class MediaSource(
         int id,
         string fileName,
-        string contentType)
+        string contentType,
+        ImagePart part)
     {
         public int Id { get; } = id;
 
@@ -570,7 +622,13 @@ public sealed partial class OpenXmlQuestionDocxParser(GioiHanTepDocx gioiHan) : 
 
         public string ContentType { get; } = contentType;
 
+        public ImagePart Part { get; } = part;
+
         public string FinalMarker { get; set; } = string.Empty;
+
+        public string Position { get; set; } = string.Empty;
+
+        public short Order { get; set; }
     }
 
     [GeneratedRegex(

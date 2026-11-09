@@ -14,8 +14,32 @@ namespace CampusExam.Api.Controllers;
 [Route("api/cau-hoi")]
 public class CauHoiController(
     ICauHoiQuery cauHoiQuery,
-    ICauHoiCommandService cauHoiCommandService) : ControllerBase
+    ICauHoiCommandService cauHoiCommandService,
+    IFileStorage fileStorage) : ControllerBase
 {
+    /// <summary>
+    /// Ảnh trong nội dung/phương án. Key lưu trữ bất biến nên cache được; CSP sandbox + nosniff để
+    /// tệp SVG/HTML giả dạng ảnh không chạy được script nếu mở trực tiếp.
+    /// </summary>
+    [HttpGet("{maCH:int}/hinh-anh/{maTN:int}")]
+    [ProducesResponseType<FileStreamResult>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetHinhAnh(int maCH, int maTN, CancellationToken cancellationToken)
+    {
+        var hinh = await cauHoiQuery.GetHinhAnhAsync(maCH, maTN, cancellationToken);
+        var stream = hinh is null ? null : await fileStorage.OpenReadAsync(hinh.StorageKey, cancellationToken);
+        if (hinh is null || stream is null)
+        {
+            return NotFound(ApiProblem.Create(HttpContext, StatusCodes.Status404NotFound, "Không tìm thấy hình",
+                ErrorCodes.QuestionMediaNotFound, $"Câu hỏi {maCH} không có hình {maTN}."));
+        }
+
+        Response.Headers.CacheControl = "private, max-age=86400, immutable";
+        Response.Headers.XContentTypeOptions = "nosniff";
+        Response.Headers.ContentSecurityPolicy = "default-src 'none'; sandbox";
+        return File(stream, hinh.MimeType);
+    }
+
     [HttpGet]
     [ProducesResponseType<TrangDuLieu<CauHoiTomTatDto>>(StatusCodes.Status200OK)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]

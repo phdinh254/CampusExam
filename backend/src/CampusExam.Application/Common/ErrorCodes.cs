@@ -39,4 +39,9 @@ public static class ErrorCodes
     public const string QuestionImportFileTooLarge = "QUESTION_IMPORT_FILE_TOO_LARGE";
     public const string QuestionImportUnsupportedFileType = "QUESTION_IMPORT_UNSUPPORTED_FILE_TYPE";
     public const string QuestionImportInvalidFile = "QUESTION_IMPORT_INVALID_FILE";
+    public const string QuestionImportHasErrors = "QUESTION_IMPORT_HAS_ERRORS";
+    public const string ImportPreviewNotFound = "IMPORT_PREVIEW_NOT_FOUND";
+    public const string ImportPreviewExpired = "IMPORT_PREVIEW_EXPIRED";
+    public const string ImportNotFound = "IMPORT_NOT_FOUND";
+    public const string QuestionMediaNotFound = "QUESTION_MEDIA_NOT_FOUND";
 }

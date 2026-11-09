@@ -94,11 +94,11 @@ Ngày cập nhật gần nhất: 09/11/2026.
 
 - Build solution thành công, không có cảnh báo hoặc lỗi tại mốc gần nhất (Debug và
   Release `-warnaserror`); `dotnet format --verify-no-changes` sạch.
-- 153/153 kiểm thử backend thành công: 45 unit test và 108 integration test (gồm
+- 165/165 kiểm thử backend thành công: 45 unit test và 120 integration test (gồm
   test HTTP qua `WebApplicationFactory` cho route, mã lỗi, OpenAPI, toàn bộ luồng
-  xác thực, KQHT, ngân hàng câu hỏi và thí sinh trên SQL Server tạm).
-- 43/43 kiểm thử frontend (Vitest, `npm test`) cho `httpClient`, xác thực, form câu
-  hỏi và form thí sinh; `npm run lint` (Oxlint) không có lỗi.
+  xác thực, KQHT, ngân hàng câu hỏi, nhập câu hỏi và thí sinh trên SQL Server tạm).
+- 48/48 kiểm thử frontend (Vitest, `npm test`) cho `httpClient`, xác thực, form câu
+  hỏi, form thí sinh và màn nhập; `npm run lint` (Oxlint) không có lỗi.
 - Integration test có truy cập database dùng `SqlServerDatabaseFixture`: mỗi lần
   chạy tạo database tạm `CampusExam_Test_*` từ `CampusExamDB.sql` rồi xóa. Máy chủ
   mặc định là SQL Server cục bộ (Windows auth); đổi bằng biến môi trường
@@ -220,10 +220,22 @@ Ngày cập nhật gần nhất: 09/11/2026.
 - Quy tắc xóa thí sinh là đề xuất, chờ xác nhận (xem D-THISINH-01).
 - Chưa thử trên trình duyệt với backend thật.
 
+### Nhập câu hỏi từ Word — bước 4, phần 2 (09/11/2026)
+
+- Chốt D-IMPORT-TRUNG-01: nhập câu hỏi/thí sinh tất cả hoặc không; mã trùng database
+  là lỗi chặn. Chốt quy tắc xóa thí sinh.
+- Xem trước đối chiếu database và giữ tệp 30 phút; xác nhận ghi câu hỏi + hình trong
+  một lần; lịch sử nhập; API ảnh câu hỏi. Ảnh lưu ở `Storage:Root` (mặc định
+  `backend/src/CampusExam.Api/App_Data/storage`, đã thêm vào `.gitignore`).
+- Frontend: trang nhập câu hỏi (nút "Nhập từ Word" ở ngân hàng câu hỏi), hình hiển thị
+  trong form sửa câu hỏi.
+- Chưa chạy với bản `.docx` thật của IU03; chưa thử trên trình duyệt với backend thật.
+
 ## Bước nhỏ tiếp theo
 
-- Bước 4 của `API_DESIGN.md` còn lại: nhập thí sinh `.xlsx`; lưu file, xác nhận nhập
-  câu hỏi + lịch sử, ảnh câu hỏi (cần chốt quy tắc mã trùng khi nhập).
+- Nhập thí sinh `.xlsx` (tất cả hoặc không), cần thêm thư viện đọc Excel hoặc dùng
+  Open XML SDK đang có.
+- Lưu mẫu IU03 thành `.docx` và chạy thử qua trang nhập câu hỏi.
 
 - Lưu mẫu IU03 thành `.docx`, chạy qua endpoint preview và đối chiếu kết quả phải
   có 41 dòng/74 ảnh; tất cả 41 dòng hiện phải báo `MISSING_CODE` vì cột mã trống.

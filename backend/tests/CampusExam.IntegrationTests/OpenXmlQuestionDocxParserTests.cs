@@ -47,6 +47,40 @@ public sealed class OpenXmlQuestionDocxParserTests
     }
 
     [Fact]
+    public async Task Read_returns_image_bytes_with_row_position_and_order()
+    {
+        await using var stream = Imports.DocxCauHoiMau.Tao(
+            new Imports.DongMau("A1-1"),
+            new Imports.DongMau("A1-2", Hinh: ImagePartType.Png));
+        var parser = new OpenXmlQuestionDocxParser();
+
+        var document = await parser.ReadAsync(stream, CancellationToken.None);
+
+        var media = Assert.Single(document.Media);
+        Assert.Equal(3, media.RowNumber); // dòng 1 là tiêu đề
+        Assert.Equal("NOIDUNG", media.Position);
+        Assert.Equal((short)1, media.Order);
+        Assert.Equal("image/png", media.ContentType);
+        Assert.Equal(Imports.DocxCauHoiMau.OnePixelPng, media.Data);
+        Assert.Equal(2, document.Preview.ValidRows);
+    }
+
+    [Fact]
+    public async Task Non_web_image_format_is_a_warning_not_an_error()
+    {
+        await using var stream = Imports.DocxCauHoiMau.Tao(new Imports.DongMau("A1-1", Hinh: ImagePartType.Emf));
+        var parser = new OpenXmlQuestionDocxParser();
+
+        var preview = await parser.PreviewAsync(stream, CancellationToken.None);
+
+        var row = Assert.Single(preview.Rows);
+        Assert.True(row.IsValid);
+        var issue = Assert.Single(row.Issues);
+        Assert.Equal("UNSUPPORTED_IMAGE_FORMAT", issue.Code);
+        Assert.Equal(QuestionImportIssueSeverity.Warning, issue.Severity);
+    }
+
+    [Fact]
     public async Task Preview_blocks_missing_code_and_unsupported_stem_marker()
     {
         await using var stream = CreateDocument(

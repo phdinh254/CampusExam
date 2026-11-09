@@ -12,7 +12,12 @@ public interface ICauHoiQuery
     Task<ThongKeCauHoiDto> GetThongKeAsync(CancellationToken cancellationToken);
 
     Task<CauHoiChiTietDto?> GetByIdAsync(int maCH, CancellationToken cancellationToken);
+
+    /// <summary>Vị trí lưu của một hình thuộc câu hỏi; null nếu hình không thuộc câu hỏi đó.</summary>
+    Task<HinhAnhLuuTru?> GetHinhAnhAsync(int maCH, int maTN, CancellationToken cancellationToken);
 }
+
+public sealed record HinhAnhLuuTru(string StorageKey, string MimeType, string TenFile);
 
 public interface ICauHoiCommandService
 {

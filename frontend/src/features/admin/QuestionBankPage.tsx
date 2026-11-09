@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { Link } from "react-router-dom";
 
 import { ConfirmDialog } from "../../components/common/ConfirmDialog";
 import { Icon } from "../../components/Icon";
@@ -6,6 +7,8 @@ import { ApiError } from "../../services/httpClient";
 import type { CauHoiChiTiet, CauHoiTomTat, KqhtDto, MaMucDo, ThongKeCauHoi, TrangDuLieu, TrangThaiSuDung } from "../../types/api";
 import { kqhtApi } from "../learning-outcomes/api";
 import { cauHoiApi } from "../question-bank/api";
+import { HinhCauHoi } from "../question-bank/HinhCauHoi";
+import { TEN_VI_TRI } from "../question-bank/importView";
 import {
   DAP_AN,
   GIOI_HAN,
@@ -213,6 +216,7 @@ export default function QuestionBankPage() {
       <section className="page-heading-row">
         <div><h2>Ngân hàng câu hỏi</h2></div>
         <div className="heading-actions">
+          <Link className="button button-secondary" to="/admin/questions/import"><Icon name="file" size={17} /> Nhập từ Word</Link>
           <button className="button button-primary" disabled={kqhtDangDung.length === 0} onClick={moThem} title={kqhtDangDung.length === 0 ? "Cần ít nhất một KQHT đang sử dụng" : undefined} type="button">
             <Icon name="plus" size={17} /> Thêm câu hỏi
           </button>
@@ -362,6 +366,20 @@ export default function QuestionBankPage() {
                       })}
                     </div>
                     {formErrors.dapAnDung && <small className="field-error">{formErrors.dapAnDung}</small>}
+                    {editingDetail && editingDetail.hinhAnh.length > 0 && (
+                      <div className="question-images">
+                        <span>Hình trong câu hỏi</span>
+                        <small className="field-help">Mã như <code>{"{{media:NOIDUNG:1}}"}</code> trong nội dung đánh dấu vị trí hình; giữ nguyên mã khi sửa để hình hiển thị đúng chỗ.</small>
+                        <div className="question-image-grid">
+                          {editingDetail.hinhAnh.map((hinh) => (
+                            <figure key={hinh.maTN}>
+                              <HinhCauHoi alt={hinh.altText ?? `${TEN_VI_TRI[hinh.viTri]} – hình ${hinh.thuTu}`} url={hinh.url} />
+                              <figcaption><code>{`{{media:${hinh.viTri}:${hinh.thuTu}}}`}</code></figcaption>
+                            </figure>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                     <label className="checkbox-field"><input checked={form.coDinhDapAn} onChange={(event) => capNhatForm("coDinhDapAn", event.target.checked)} type="checkbox" /><span>Giữ nguyên thứ tự phương án khi sinh đề (dùng cho phương án kiểu “Cả A và B đều đúng”).</span></label>
                   </>
                 )}

@@ -144,5 +144,3 @@ public sealed class DoiTrangThaiTaiKhoanRequest
     public TrangThaiTaiKhoan? TrangThai { get; init; }
 }
 
-/// <summary>Quản trị viên thực hiện thao tác, để ghi NHATKYHD.</summary>
-public sealed record NguoiThucHien(int MaTK, string? DiaChiIP);

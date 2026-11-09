@@ -25,6 +25,7 @@ public static class DependencyInjection
         services.AddScoped<ICauHoiCommandService, EfCauHoiCommandService>();
         services.AddScoped<IThiSinhQuery, EfThiSinhQuery>();
         services.AddScoped<IThiSinhCommandService, EfThiSinhCommandService>();
+        services.AddScoped<IQuestionImportService, EfQuestionImportService>();
         services.AddScoped<IMucDoQuery, EfMucDoQuery>();
         services.AddSingleton<IQuestionDocxParser>(new OpenXmlQuestionDocxParser(GioiHanTepDocx.MacDinh));
         services.AddSingleton<IPasswordHasher, AspNetPasswordHasher>();

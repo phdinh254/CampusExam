@@ -48,7 +48,7 @@ dự thi được từ đầu đến cuối:
 - Frontend: giao diện ba không gian (quản trị, thí sinh, phòng thi), đăng nhập, đổi
   mật khẩu, route guard; màn hình KQHT, ngân hàng câu hỏi và thí sinh nối API thật,
   các màn hình khác còn dữ liệu mẫu.
-- 196 test tự động (45 unit, 108 integration backend trên SQL Server thật; 43 Vitest
+- 213 test tự động (45 unit, 120 integration backend trên SQL Server thật; 48 Vitest
   frontend) chạy thành công; frontend typecheck và build thành công.
 - Tài liệu: `README.md`, `API_DESIGN.md`, `BUSINESS_RULE_DECISIONS.md`, `PROGRESS.md`.
 
@@ -57,8 +57,8 @@ dự thi được từ đầu đến cuối:
 - EF Core mới ánh xạ 12/22 bảng (`MUCDO`, `KQHOCTAP`, `CAUHOI`, `TAINGUYEN_CAUHOI`,
   `TAIKHOAN`, `PHIENDANGNHAP`, `NHATKYHD`, `THISINH`, `KHOADANGNHAP`; chỉ khóa:
   `GOM_CAU`, `PHANCONGTHI`, `BAILAM`).
-- Import câu hỏi mới có bước preview; chưa lưu file, chưa ghi `LANIMPORT`,
-  `CAUHOI`, `TAINGUYEN_CAUHOI`.
+- Nhập câu hỏi DOCX đã ghi được (preview, xác nhận, lịch sử, ảnh); chưa thử với bản
+  `.docx` thật của mẫu IU03.
 - Chưa có nhập thí sinh `.xlsx`, ma trận, sinh đề, kỳ thi, engine làm bài, chấm điểm,
   báo cáo.
 - Chưa có màn tạo thêm tài khoản quản trị.
@@ -104,6 +104,7 @@ Chi tiết ở `docs/BUSINESS_RULE_DECISIONS.md`.
 | D-TRANGTHAI-01 (09/11/2026) | Giữ bảng giá trị trạng thái đang có trong schema |
 | D-CAUHOI-TT-01 (09/11/2026) | Câu hỏi chuyển trạng thái tự do; xóa cứng chỉ khi chưa nằm trong đề; KQHT ngừng dùng không nhận câu mới |
 | D-CAUDAN-01 (09/11/2026) | P0 giữ chặn dòng có "Đánh dấu câu dẫn" (`UNSUPPORTED_STEM_MARKER`) |
+| D-IMPORT-TRUNG-01 (09/11/2026) | Nhập câu hỏi/thí sinh tất cả hoặc không; mã trùng database là lỗi chặn, không ghi đè |
 
 ### Đề xuất, chờ người hướng dẫn xác nhận
 
@@ -113,7 +114,6 @@ Chi tiết ở `docs/BUSINESS_RULE_DECISIONS.md`.
 
 | Quyết định | Hạn chốt | Chặn giai đoạn |
 |---|---|---|
-| Quy tắc trùng mã/tài khoản khi import, import từng phần | Tuần 3 | 3 |
 | Chuyển trạng thái kỳ thi; hủy kỳ thi | Tuần 5 | 6 |
 | Thí sinh vào muộn: đủ thời lượng hay kết thúc theo giờ chung | Tuần 6 | 7 |
 | Thi lại, cộng giờ, mở lại bài | Tuần 6 | 7 |
@@ -236,11 +236,12 @@ dùng không xóa được; test authorization và validation đầy đủ.
 
 - [x] Preview: đọc bảng câu hỏi, phương án, đáp án, hình; lỗi/cảnh báo từng dòng.
 - [ ] Kiểm thử với bản `.docx` thật của mẫu IU03 (41 dòng, 74 ảnh).
-- [ ] Lưu file hình vào storage theo `STORAGEKEY` bất biến; kiểm tra loại/kích thước
-  ảnh.
-- [ ] Commit import trong transaction: `LANIMPORT`, `LOINHAPDULIEU`, `CAUHOI`,
+- [x] Lưu file hình vào storage theo `STORAGEKEY` bất biến (`IFileStorage`, thư mục
+  `Storage:Root`); định dạng không hiển thị được trên web chỉ cảnh báo.
+- [x] Commit import trong transaction: `LANIMPORT`, `CAUHOI`,
   `TAINGUYEN_CAUHOI`; đối chiếu mã với KQHT/mức độ trong database.
-- [ ] UI upload, preview, xác nhận, lịch sử import, tải báo cáo lỗi.
+- [x] UI upload, preview, xác nhận, lịch sử import (báo cáo lỗi bỏ ở P0, xem
+  D-IMPORT-TRUNG-01).
 
 **Thí sinh**
 
@@ -337,8 +338,8 @@ bằng tiền tố đường dẫn. Hợp đồng chi tiết ở `docs/API_DESIG
 | Xác thực | `/api/xac-thuc/dang-nhap`, `/lam-moi`, `/dang-xuat`, `/toi`, `/doi-mat-khau` | Công khai/đã đăng nhập | [x] |
 | Tài khoản | khóa/mở, cấp lại mật khẩu qua `/api/thi-sinh/{msts}/...` | Admin | [~] |
 | Danh mục | `/api/kqht`, `/api/muc-do` | Admin | [x] |
-| Câu hỏi | `/api/cau-hoi` (ảnh câu hỏi làm ở bước 4) | Admin | [~] |
-| Nhập câu hỏi | `/api/nhap-cau-hoi/xem-truoc`, xác nhận, lịch sử | Admin | [~] |
+| Câu hỏi | `/api/cau-hoi` (gồm ảnh `/hinh-anh/{maTN}`) | Admin | [x] |
+| Nhập câu hỏi | `/api/nhap-cau-hoi/xem-truoc`, xác nhận, lịch sử | Admin | [x] |
 | Thí sinh | `/api/thi-sinh` (nhập `.xlsx` chưa có) | Admin | [~] |
 | Ma trận | `/api/ma-tran` | Admin | [ ] |
 | Đề | `/api/de-goc` | Admin | [ ] |
@@ -488,9 +489,9 @@ KQHT + ngân hàng câu hỏi (bước 3).
    09/11/2026.
 3. ~~Bước 3 `API_DESIGN.md`~~ — xong 09/11/2026.
 4. Xin bản `.docx` hợp lệ của mẫu IU03 để kiểm thử nhập câu hỏi.
-5. Bước 4 `API_DESIGN.md`: ~~CRUD thí sinh, khóa/mở, cấp lại mật khẩu~~ (xong
-   09/11/2026); còn nhập thí sinh `.xlsx`, lưu file + xác nhận nhập câu hỏi + lịch sử,
-   ảnh câu hỏi. Xác nhận nhập câu hỏi cần chốt quy tắc mã trùng trước.
+5. Bước 4 `API_DESIGN.md`: ~~CRUD thí sinh, khóa/mở, cấp lại mật khẩu; lưu file +
+   xác nhận nhập câu hỏi + lịch sử, ảnh câu hỏi~~ (xong 09/11/2026); còn nhập thí sinh
+   `.xlsx` (tất cả hoặc không, D-IMPORT-TRUNG-01).
 
 Cuối mỗi tuần đối chiếu tiến độ thực tế với mốc ở mục 14 và điều chỉnh kế hoạch.
 Chưa xong auth thì không bắt đầu engine thi.

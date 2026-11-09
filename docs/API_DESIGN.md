@@ -302,11 +302,18 @@ Luồng hai bước, file chỉ upload một lần:
 
 | | Method & path | Ghi chú |
 |---|---|---|
-| 🔁 | `POST /nhap-cau-hoi/xem-truoc` (multipart `file`) — nay là `/question-imports/preview` | thêm `maXemTruoc` + `hetHan`; backend giữ file tạm 30 phút |
-| 🆕 | `POST /nhap-cau-hoi/xem-truoc/{maXemTruoc}/xac-nhan` | ghi `LANIMPORT`, `CAUHOI`, `TAINGUYEN_CAUHOI`, `LOINHAPDULIEU` trong một transaction |
-| 🆕 | `GET /nhap-cau-hoi?trang&kichThuocTrang` | Lịch sử các lần nhập (`LANIMPORT`) |
-| 🆕 | `GET /nhap-cau-hoi/{maLanImport}` | Tổng kết một lần nhập |
-| 🆕 | `GET /nhap-cau-hoi/{maLanImport}/loi?dinhDang=xlsx` | Tải báo cáo lỗi |
+| ✅ | `POST /nhap-cau-hoi/xem-truoc` (multipart `file`) | đối chiếu database; hết lỗi thì có `maXemTruoc` + `hetHan`, backend giữ tệp tạm 30 phút; còn lỗi thì hai trường này `null` |
+| ✅ | `POST /nhap-cau-hoi/xem-truoc/{maXemTruoc}/xac-nhan` | 201; ghi `LANIMPORT`, `CAUHOI`, `TAINGUYEN_CAUHOI` + file hình trong một lần (tất cả hoặc không) |
+| ✅ | `GET /nhap-cau-hoi?trang&kichThuocTrang` | Lịch sử các lần nhập câu hỏi (`LANIMPORT`), mới nhất trước |
+| ✅ | `GET /nhap-cau-hoi/{maLanImport}` | Tổng kết một lần nhập |
+| — | `GET /nhap-cau-hoi/{maLanImport}/loi?dinhDang=xlsx` | Bỏ ở P0: không nhập từng phần nên lần nhập thành công không có dòng lỗi (D-IMPORT-TRUNG-01); lỗi xem ngay ở bản xem trước |
+
+Phần tử lịch sử: `{ maLanImport, tenFile, tongDong, soThanhCong, soDongLoi, thoiGian,
+trangThai: "hoan_tat", nguoiThucHien }`. Lỗi xác nhận: 404 `IMPORT_PREVIEW_NOT_FOUND`
+(không có, đã dùng, hoặc của tài khoản khác), 410 `IMPORT_PREVIEW_EXPIRED`, 409
+`QUESTION_IMPORT_HAS_ERRORS` (database đổi từ lúc xem trước). Mã lỗi theo dòng thêm
+`DUPLICATE_IN_DATABASE`, `KQHT_NOT_FOUND`, `KQHT_INACTIVE`, `CONTENT_TOO_LONG`,
+`ANSWER_TOO_LONG`; cảnh báo `UNSUPPORTED_IMAGE_FORMAT`.
 
 Đổi tên trường của response xem trước:
 
@@ -766,5 +773,20 @@ Xong (09/11/2026) — thí sinh và tài khoản thí sinh:
   khẩu, phân trang, thêm/sửa, khóa/mở, cấp lại mật khẩu, xóa).
 - 17 integration test HTTP (`ThiSinhApiTests`), Vitest cho `studentForm`.
 
-Còn lại: nhập thí sinh `.xlsx`; lưu file + xác nhận nhập câu hỏi + lịch sử; ảnh câu
-hỏi. Xác nhận nhập câu hỏi chờ quyết định xử lý mã trùng (`BUSINESS_RULE_DECISIONS.md`).
+Xong (09/11/2026) — ghi kết quả nhập câu hỏi và ảnh (D-IMPORT-TRUNG-01, D-MEDIA-01):
+
+- `IFileStorage` + `LocalFileStorage` (thư mục `Storage:Root`, mặc định
+  `App_Data/storage`): key do backend sinh, kiểm tra chặt (không `..`), không ghi đè.
+- Parser có `ReadAsync` trả kèm byte hình; preview đối chiếu database (mã trùng, KQHT
+  thiếu/ngừng dùng, độ dài cột). Hết lỗi thì lưu tệp tạm `tam/nhap-cau-hoi/` 30 phút;
+  tệp bỏ dở quá một ngày được dọn khi có lần xem trước mới.
+- Xác nhận: đọc lại tệp, kiểm tra lại, lưu hình (`cau-hoi/yyyy/MM/{guid}.ext`) rồi ghi
+  `LANIMPORT` + `CAUHOI` + `TAINGUYEN_CAUHOI` + `NHATKYHD` trong một transaction; lỗi
+  trước commit thì xóa các file vừa lưu. Xóa câu hỏi xóa cả file hình sau khi commit.
+- `GET /cau-hoi/{maCH}/hinh-anh/{maTN}`: `Cache-Control: private, immutable`,
+  `nosniff`, CSP `sandbox`. Frontend tải ảnh dạng blob vì cần access token.
+- Frontend: trang `/admin/questions/import` (chọn tệp, bảng kiểm tra từng dòng, xác
+  nhận, lịch sử); form sửa câu hỏi hiển thị hình và mã vị trí.
+- 12 integration test mới (`NhapCauHoiApiTests`, parser `ReadAsync`/cảnh báo EMF).
+
+Còn lại: nhập thí sinh `.xlsx`.

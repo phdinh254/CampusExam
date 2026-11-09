@@ -99,6 +99,28 @@ chấp ghi đồng thời.
 - Chưa có test hai request ghi đồng thời cùng `KYHIEU` để đi vào nhánh bắt lỗi
   2601/2627.
 
+## D-IMPORT-TRUNG-01 — Dữ liệu trùng và nhập từng phần
+
+**Trạng thái:** Đã chốt (09/11/2026).
+
+- **Câu hỏi (DOCX):** mã câu hỏi đã có trong ngân hàng là **lỗi chặn**
+  (`DUPLICATE_IN_DATABASE`); không bao giờ ghi đè câu đang có. Cùng là lỗi chặn: KQHT
+  của ký hiệu chưa tồn tại (`KQHT_NOT_FOUND`), KQHT đã ngừng dùng (`KQHT_INACTIVE`),
+  nội dung vượt độ dài cột (`CONTENT_TOO_LONG`, `ANSWER_TOO_LONG`).
+- **Thí sinh (XLSX):** tất cả hoặc không. MSTS trùng với database hoặc trong tệp, CCCD
+  trùng, dữ liệu sai đều là lỗi chặn; phải sửa hết mới xác nhận, ghi trong một
+  transaction.
+- Không nhập từng phần, nên `LOINHAPDULIEU` chưa dùng; lần nhập thành công luôn có
+  `TRANGTHAILANIMPORT = 1` (hoàn tất), `SODONGLOI = 0`.
+- Câu hỏi nhập giữ đúng mã trong tệp (STT có thể không liên tục). Câu thêm tay về sau
+  nhận `MAX(STT) + 1`.
+- Xác nhận đọc lại tệp và kiểm tra lại database; dữ liệu đổi từ lúc xem trước ⇒
+  `409 QUESTION_IMPORT_HAS_ERRORS`, không ghi gì. Bản xem trước giữ 30 phút, chỉ tài
+  khoản đã tải lên mới xác nhận được.
+- Hình định dạng trình duyệt không hiển thị được (EMF, WMF, TIFF...) chỉ là **cảnh báo**
+  (`UNSUPPORTED_IMAGE_FORMAT`): vẫn lưu để không mất dữ liệu (D-MEDIA-01), nên chuyển
+  sang PNG/JPEG.
+
 ## D-IMPORT-01 — Định dạng nhập ngân hàng câu hỏi
 
 **Trạng thái:** Đã chốt cho P0.
@@ -212,7 +234,7 @@ Ràng buộc kèm theo trong schema:
 - Sửa ngày sinh trong hồ sơ **không** tự đổi mật khẩu; ngày sinh mới chỉ có hiệu
   lực ở lần cấp lại tiếp theo.
 - Thí sinh không tự sửa hồ sơ, chỉ đổi được mật khẩu.
-- **Xóa thí sinh** (đề xuất 09/11/2026, chờ xác nhận): chỉ khi chưa được phân công kỳ
+- **Xóa thí sinh** (chốt 09/11/2026): chỉ khi chưa được phân công kỳ
   thi nào; xóa cả tài khoản và phiên đăng nhập, giữ nhật ký cũ nhưng đặt `MTK = NULL`.
   Đã phân công thì chỉ khóa tài khoản (`409 STUDENT_IN_USE`). Lý do: MSTS không sửa
   được nên tạo nhầm mã cần có cách xóa.

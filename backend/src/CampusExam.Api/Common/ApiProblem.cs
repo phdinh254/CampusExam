@@ -45,6 +45,9 @@ public static class ApiProblem
             LoaiLoi.KhongTimThay => (
                 StatusCodes.Status404NotFound,
                 Create(httpContext, StatusCodes.Status404NotFound, loi.TieuDe, loi.Code, loi.ChiTiet)),
+            LoaiLoi.HetHan => (
+                StatusCodes.Status410Gone,
+                Create(httpContext, StatusCodes.Status410Gone, loi.TieuDe, loi.Code, loi.ChiTiet)),
             _ => (
                 StatusCodes.Status409Conflict,
                 Create(httpContext, StatusCodes.Status409Conflict, loi.TieuDe, loi.Code, loi.ChiTiet))

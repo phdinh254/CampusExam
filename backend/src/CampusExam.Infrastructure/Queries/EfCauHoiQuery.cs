@@ -117,6 +117,13 @@ public sealed class EfCauHoiQuery(
         return new ThongKeCauHoiDto(dangSuDung + ngungSuDung, dangSuDung, ngungSuDung, soKQHT);
     }
 
+    public Task<HinhAnhLuuTru?> GetHinhAnhAsync(int maCH, int maTN, CancellationToken cancellationToken) =>
+        dbContext.TaiNguyenCauHois
+            .AsNoTracking()
+            .Where(tn => tn.MaCH == maCH && tn.MaTN == maTN)
+            .Select(tn => new HinhAnhLuuTru(tn.StorageKey, tn.MimeType, tn.TenFile))
+            .SingleOrDefaultAsync(cancellationToken);
+
     public async Task<CauHoiChiTietDto?> GetByIdAsync(int maCH, CancellationToken cancellationToken)
     {
         var cauHoi = await dbContext.CauHois

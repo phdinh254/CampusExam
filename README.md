@@ -81,6 +81,7 @@ push, chạy `dotnet format CampusExam.sln` trong `backend/` để tránh CI bá
 | `Auth:TokenCheckCacheSeconds` | 30 | Cache kiểm tra mã bảo mật token; 0 = tắt |
 | `ReverseProxy:KnownProxies` | `[]` | IP reverse proxy được tin `X-Forwarded-For` |
 | `ReverseProxy:KnownNetworks` | `[]` | Dải mạng proxy được tin, ví dụ `10.0.0.0/24` |
+| `Storage:Root` | `App_Data/storage` cạnh ứng dụng | Thư mục lưu ảnh câu hỏi và tệp nhập tạm; triển khai thật nên trỏ tới ổ có sao lưu |
 
 Chạy sau reverse proxy (IIS, nginx…) **phải** khai báo proxy ở `ReverseProxy`, nếu
 không mọi người dùng chung IP của proxy: chung hạn mức đăng nhập và chung bộ đếm

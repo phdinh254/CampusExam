@@ -259,4 +259,21 @@ export type XemTruocNhapCauHoi = {
   soDongLoi: number;
   tongHinhAnh: number;
   dong: DongXemTruocCauHoi[];
+  /** Mã để xác nhận nhập; null khi còn dòng lỗi (không xác nhận được). */
+  maXemTruoc: string | null;
+  /** Hạn xác nhận (UTC), 30 phút sau khi xem trước. */
+  hetHan: string | null;
+};
+
+export type TrangThaiLanImport = "dang_xu_ly" | "hoan_tat" | "that_bai" | "hoan_tat_co_loi";
+
+export type LanImport = {
+  maLanImport: number;
+  tenFile: string;
+  tongDong: number;
+  soThanhCong: number;
+  soDongLoi: number;
+  thoiGian: string;
+  trangThai: TrangThaiLanImport;
+  nguoiThucHien: string;
 };

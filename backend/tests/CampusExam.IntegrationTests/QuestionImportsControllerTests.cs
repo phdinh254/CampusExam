@@ -1,4 +1,8 @@
+using System.Security.Claims;
+using CampusExam.Api.Authorization;
 using CampusExam.Api.Controllers;
+using CampusExam.Application.Common;
+using CampusExam.Application.Common.Models;
 using CampusExam.Application.QuestionImports;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -9,25 +13,26 @@ namespace CampusExam.IntegrationTests;
 public sealed class QuestionImportsControllerTests
 {
     [Fact]
-    public async Task Preview_returns_parser_result_for_docx_file()
+    public async Task Preview_returns_service_result_and_passes_file_name_and_user()
     {
         var expected = new QuestionImportPreview(0, 0, 0, 0, []);
-        var parser = new FakeParser(expected);
-        var controller = new QuestionImportsController(parser);
+        var service = new FakeImportService(expected);
+        var controller = TaoController(service);
         var file = CreateFile("questions.docx", [1, 2, 3]);
 
         var result = await controller.Preview(file, CancellationToken.None);
 
         var okResult = Assert.IsType<OkObjectResult>(result.Result);
         Assert.Same(expected, okResult.Value);
-        Assert.True(parser.WasCalled);
+        Assert.Equal("questions.docx", service.TenFile);
+        Assert.Equal(42, service.Nguoi?.MaTK);
     }
 
     [Fact]
-    public async Task Preview_rejects_legacy_doc_before_calling_parser()
+    public async Task Preview_rejects_legacy_doc_before_calling_service()
     {
-        var parser = new FakeParser(new QuestionImportPreview(0, 0, 0, 0, []));
-        var controller = new QuestionImportsController(parser);
+        var service = new FakeImportService(new QuestionImportPreview(0, 0, 0, 0, []));
+        var controller = TaoController(service);
         var file = CreateFile("questions.doc", [1, 2, 3]);
 
         var result = await controller.Preview(file, CancellationToken.None);
@@ -37,8 +42,19 @@ public sealed class QuestionImportsControllerTests
         Assert.Equal(
             "QUESTION_IMPORT_UNSUPPORTED_FILE_TYPE",
             problem.Extensions["code"]);
-        Assert.False(parser.WasCalled);
+        Assert.Null(service.TenFile);
     }
+
+    private static QuestionImportsController TaoController(IQuestionImportService service) => new(service)
+    {
+        ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext
+            {
+                User = new ClaimsPrincipal(new ClaimsIdentity([new Claim(CampusClaims.MaTaiKhoan, "42")], "test"))
+            }
+        }
+    };
 
     private static IFormFile CreateFile(string fileName, byte[] content)
     {
@@ -46,17 +62,30 @@ public sealed class QuestionImportsControllerTests
         return new FormFile(stream, 0, content.Length, "file", fileName);
     }
 
-    private sealed class FakeParser(
-        QuestionImportPreview result) : IQuestionDocxParser
+    private sealed class FakeImportService(QuestionImportPreview result) : IQuestionImportService
     {
-        public bool WasCalled { get; private set; }
+        public string? TenFile { get; private set; }
 
-        public Task<QuestionImportPreview> PreviewAsync(
-            Stream docxStream,
+        public NguoiThucHien? Nguoi { get; private set; }
+
+        public Task<QuestionImportPreview> XemTruocAsync(
+            Stream docx,
+            string tenFile,
+            NguoiThucHien nguoi,
             CancellationToken cancellationToken)
         {
-            WasCalled = true;
+            TenFile = tenFile;
+            Nguoi = nguoi;
             return Task.FromResult(result);
         }
+
+        public Task<KetQua<LanImportDto>> XacNhanAsync(string maXemTruoc, NguoiThucHien nguoi, CancellationToken cancellationToken) =>
+            throw new NotSupportedException();
+
+        public Task<TrangDuLieu<LanImportDto>> GetPageAsync(TruyVanTrang truyVan, CancellationToken cancellationToken) =>
+            throw new NotSupportedException();
+
+        public Task<LanImportDto?> GetByIdAsync(int maLanImport, CancellationToken cancellationToken) =>
+            throw new NotSupportedException();
     }
 }

@@ -29,6 +29,18 @@ public sealed class CampusExamApiFactory(
 
     private static readonly ConcurrentDictionary<string, CampusExamApiFactory> Shared = new();
 
+    /// <summary>Thư mục storage riêng của host này (ảnh câu hỏi, tệp nhập tạm); xóa khi dispose.</summary>
+    public string StorageRoot { get; } = Path.Combine(Path.GetTempPath(), "CampusExam_Test_Storage", Guid.NewGuid().ToString("N"));
+
+    protected override void Dispose(bool disposing)
+    {
+        base.Dispose(disposing);
+        if (disposing && Directory.Exists(StorageRoot))
+        {
+            Directory.Delete(StorageRoot, recursive: true);
+        }
+    }
+
     /// <summary>Dùng chung một host cho mọi test trên cùng database để test chạy nhanh.</summary>
     public static CampusExamApiFactory For(SqlServerDatabaseFixture database) =>
         Shared.GetOrAdd(database.ConnectionString, connection => new CampusExamApiFactory(connection));
@@ -38,6 +50,7 @@ public sealed class CampusExamApiFactory(
         var settings = new Dictionary<string, string?>
         {
             ["ConnectionStrings:CampusExam"] = connectionString,
+            ["Storage:Root"] = StorageRoot,
             ["Auth:SigningKey"] = SigningKey,
             ["Auth:LoginPermitsPerMinute"] = "10000",
             ["Auth:AllowedOrigins:0"] = AllowedOrigin

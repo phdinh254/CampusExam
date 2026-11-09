@@ -9,7 +9,10 @@ public enum LoaiLoi
     KhongTimThay,
 
     /// <summary>HTTP 409: trùng, sai trạng thái hoặc ghi đè.</summary>
-    XungDot
+    XungDot,
+
+    /// <summary>HTTP 410: tài nguyên tạm (bản xem trước) đã hết hạn.</summary>
+    HetHan
 }
 
 /// <summary>Lỗi nghiệp vụ trả từ tầng Application; Api đổi thành ProblemDetails.</summary>

@@ -11,7 +11,8 @@ namespace CampusExam.Infrastructure.Commands;
 
 public sealed class EfCauHoiCommandService(
     CampusExamDbContext dbContext,
-    TimeProvider timeProvider) : ICauHoiCommandService
+    TimeProvider timeProvider,
+    IFileStorage fileStorage) : ICauHoiCommandService
 {
     /// <summary>Số lần thử lại khi hai request cùng lấy một STT (hiếm vì đã khóa phạm vi).</summary>
     private const int SoLanThuCapStt = 3;
@@ -155,10 +156,13 @@ public sealed class EfCauHoiCommandService(
             return DangDuocDung();
         }
 
+        var keyHinh = await dbContext.TaiNguyenCauHois
+            .Where(x => x.MaCH == maCH)
+            .Select(x => x.StorageKey)
+            .ToListAsync(cancellationToken);
         try
         {
             await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
-            // Chưa có lưu file ảnh (bước 4); khi có, phải xóa cả file trong storage sau khi commit.
             await dbContext.TaiNguyenCauHois.Where(x => x.MaCH == maCH).ExecuteDeleteAsync(cancellationToken);
             await dbContext.CauHois.Where(x => x.MaCH == maCH).ExecuteDeleteAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
@@ -167,6 +171,12 @@ public sealed class EfCauHoiCommandService(
         {
             // Câu hỏi vừa được đưa vào một đề trong lúc xóa.
             return DangDuocDung();
+        }
+
+        // Xóa file sau khi commit: lỗi xóa file chỉ để lại file mồ côi, không mất dữ liệu.
+        foreach (var key in keyHinh)
+        {
+            await fileStorage.DeleteAsync(key, CancellationToken.None);
         }
 
         return KetQua<KhongCo>.Ok(default);
